@@ -181,7 +181,7 @@ def shift_x0_by_time(x0, kn, delta_t, n):
         Shifted x0
     """
     ##  to decrease frequency (shift from ref time = 0.5 to 0), make delta_t negative so x > x0 meaning f < f0;
-    ## to increse frequency (shift from ref time = 0 to 0.5), delta_t must be positive so x < x0 --> f > f0  
+    ## to increase frequency (shift from ref time = 0 to 0.5), delta_t must be positive so x < x0 --> f > f0  
     return x0 - (n - 1) * np.abs(kn) * delta_t
 
 def get_f0_from_x0(x0, n):
