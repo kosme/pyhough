@@ -348,8 +348,8 @@ def run_tcw_injection(args, inj_provider=None):
 
         fdotmin = physics.calc_fdot_chirp(mc,minf) # calculate minimum fdot
         fdotmax = physics.calc_fdot_chirp(mc,maxf) # calculate maximum fdot
-        t1 = physics.calc_time_to_coalescence(mc,minf) # time left to coalesence at minf
-        t2 = physics.calc_time_to_coalescence(mc,maxf) # time left to coalesence at maxf
+        t1 = physics.calc_time_to_coalescence(mc,minf) # time left to coalescence at minf
+        t2 = physics.calc_time_to_coalescence(mc,maxf) # time left to coalescence at maxf
 
         dur = np.floor(t1-t2) # duration analyzed
         new_tfft = np.round(1/np.sqrt(fdotmax)) # confine all frequency modulations to 1 freq bin in each FFT

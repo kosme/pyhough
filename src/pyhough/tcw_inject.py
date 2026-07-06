@@ -38,7 +38,7 @@ n = 11/3
 f0 = 800
 h0 = 4.973e-23 / 2
 
-### flags about which hough to use, whether to downsample, what noise to use, whether to plot, and whehter to extract sub-band or not
+### flags about which hough to use, whether to downsample, what noise to use, whether to plot, and whether to extract sub-band or not
 
 white_noise = True
 downsamp = True
@@ -76,8 +76,8 @@ kn = physics.calc_k(mc)
 
 fdotmin = physics.calc_fdot_chirp(mc,minf) # calculate minimum fdot
 fdotmax = physics.calc_fdot_chirp(mc,maxf) # calculate maximum fdot
-t1 = physics.calc_time_to_coalescence(mc,minf) # time left to coalesence at minf
-t2 = physics.calc_time_to_coalescence(mc,maxf) # time left to coalesence at maxf
+t1 = physics.calc_time_to_coalescence(mc,minf) # time left to coalescence at minf
+t2 = physics.calc_time_to_coalescence(mc,maxf) # time left to coalescence at maxf
 dur = np.floor(t1-t2) # duration analyzed
 new_tfft = np.round(1/np.sqrt(fdotmax)) # confine all frequency modulations to 1 freq bin in each FFT
 

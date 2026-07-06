@@ -182,7 +182,7 @@ def change_FFT_length(sft,sfdb_head,TFFT,minf,maxf,inj_provider=None,num_orig_FF
                 st = time_conversions.gmst(mjd_time) + dtnew * (86400.0 / SD) * np.arange(nfftnew) / 3600.0
 
             else:
-                NORM = 1.0  #### neeeds to be 1, because in sinusoid case, can recover amp h0 with np.max(np.abs((sig_f)) / len(sig_f)
+                NORM = 1.0  #### needs to be 1, because in sinusoid case, can recover amp h0 with np.max(np.abs((sig_f)) / len(sig_f)
                             #### 1 is consistent with how the inj_times are sampled in the non-downsampled case
                 if not band:
                     k1 = 0
@@ -294,7 +294,7 @@ def calc_dsfact(dt, minf,maxf):
         Original time sampling interval.
     minf : array-like
     maxf : array-like
-        min and max freqeuncies of the band to downsample to
+        min and max frequencies of the band to downsample to
 
     Returns
     -------
