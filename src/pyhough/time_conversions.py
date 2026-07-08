@@ -298,6 +298,9 @@ def leap_seconds(mjd):
         TAI-UTC in seconds.
     """
 
+    if not isinstance(mjd,(float, list, tuple, np.ndarray)):
+        raise ValueError
+
     leaptimes = np.array([
         41317,  # 1972 Jan 1,  TAI-UTC = 10
         41499,  # 1972 Jul 1,  TAI-UTC = 11

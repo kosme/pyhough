@@ -40,5 +40,57 @@ class Test_gps2mjd(unittest.TestCase):
         self.assertAlmostEqual(gps2mjd(1467521334.0), 61229.20041667)
 
 
+@unittest.skipIf(DEVELOPMENT, "Development")
+class Test_leapseconds(unittest.TestCase):
+    MIN_VALUE = 41317.0
+    MAX_VALUE = 57754.0
+    RANGE = MAX_VALUE - MIN_VALUE
+
+    def test_input_types(self):
+        # Basic types that must be rejected
+        self.assertRaises(ValueError, leap_seconds, '0')
+        self.assertRaises(ValueError, leap_seconds, 41317)
+        self.assertRaises(ValueError, leap_seconds, True)
+        self.assertRaises(ValueError, leap_seconds, ['a', 'b'])
+        # Check expected input types do not raise an exception
+        try:
+            leap_seconds(self.MIN_VALUE)  # float
+            leap_seconds([self.MIN_VALUE])  # list
+            leap_seconds((self.MIN_VALUE, self.MIN_VALUE))  # tuple
+            leap_seconds(np.asarray(self.MIN_VALUE))  # numpy array-like
+        except ValueError:
+            self.fail()
+
+    def test_output_types(self):
+        self.assertIsInstance(leap_seconds(self.MIN_VALUE),
+                              (int, float, np.ndarray))
+        self.assertIsInstance(leap_seconds([self.MIN_VALUE]),
+                              (int, float, np.ndarray))
+        self.assertIsInstance(leap_seconds((self.MIN_VALUE, self.MIN_VALUE)),
+                              (int, float, np.ndarray))
+        self.assertIsInstance(leap_seconds(np.asarray(self.MIN_VALUE)),
+                              (int, float, np.ndarray))
+
+    def test_input_values(self):
+        import random
+        # Random value below the first defined value
+        self.assertRaises(ValueError, leap_seconds,
+                          random.random() * self.MIN_VALUE)
+
+        self.assertEqual(leap_seconds(self.MIN_VALUE), 10)
+        self.assertListEqual(
+            list(leap_seconds([self.MIN_VALUE, self.MAX_VALUE])), [10.0, 37.0])
+
+        # Generate a random value inside the defined range
+        randVal = (random.random() * self.RANGE) + self.MIN_VALUE
+        res = leap_seconds(randVal)
+        self.assertGreaterEqual(res, 10.0)
+        self.assertLessEqual(res, 37.0)
+
+        # Generate a random value greater than the max defined value
+        randVal = (random.random() * self.RANGE) + self.MAX_VALUE + 1
+        self.assertEqual(leap_seconds(randVal), 37.0)
+
+
 if __name__ == '__main__':
     unittest.main()
