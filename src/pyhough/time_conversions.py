@@ -14,15 +14,23 @@ def gps2mjd(tgps):
     mjd : ndarray
         Modified Julian Date (days).
     """
+    
+    # Reject wrong input types
+    if not isinstance(tgps, (float, list, tuple, np.ndarray)):
+        raise ValueError
 
     tgps = np.asarray(tgps, dtype=float)
 
     t0 = 44244.0  # MJD at GPS epoch (6-Jan-1980 00:00:00)
 
-    mjd = tgps / 86400.0 + t0
+    mjd = tgps / SECONDS_IN_DAY + t0
 
     # Leap second correction (GPS linked to TAI, offset from UTC)
     mjd = mjd - (leap_seconds(mjd) - 19.0) / 86400.0
+    
+    # Ensure output type consistency
+    if not isinstance(mjd, np.ndarray):
+        return np.asarray(mjd)
 
     return mjd
 
