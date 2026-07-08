@@ -77,6 +77,24 @@ class Test_leapseconds(unittest.TestCase):
         self.assertRaises(ValueError, leap_seconds,
                           random.random() * self.MIN_VALUE)
 
+        # Check that values in range do not throw an exception
+        try:
+            # Generate a random value inside the defined range
+            randVal = (random.random() * self.RANGE) + self.MIN_VALUE
+            leap_seconds(randVal)
+        except ValueError:
+            self.fail()
+
+        # Check that values betyond the range do not throw an exception
+        try:
+            # Generate a random value inside the defined range
+            randVal = (random.random() * self.RANGE) + self.MAX_VALUE + 1
+            leap_seconds(randVal)
+        except ValueError:
+            self.fail()
+
+    def test_output_values(self):
+        import random
         self.assertEqual(leap_seconds(self.MIN_VALUE), 10)
         self.assertListEqual(
             list(leap_seconds([self.MIN_VALUE, self.MAX_VALUE])), [10.0, 37.0])
