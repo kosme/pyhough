@@ -13,6 +13,8 @@ class Test_gps2mjd(unittest.TestCase):
         self.assertRaises(ValueError, gps2mjd, 0)
         self.assertRaises(ValueError, gps2mjd, True)
         self.assertRaises(ValueError, gps2mjd, ['a', 'b'])
+        self.assertRaises(ValueError, tdt2tdb, object())
+        self.assertRaises(ValueError, tdt2tdb, None)
 
         # Check expected input types do not raise an exception
         try:
@@ -52,6 +54,9 @@ class Test_leapseconds(unittest.TestCase):
         self.assertRaises(ValueError, leap_seconds, 41317)
         self.assertRaises(ValueError, leap_seconds, True)
         self.assertRaises(ValueError, leap_seconds, ['a', 'b'])
+        self.assertRaises(ValueError, leap_seconds, object())
+        self.assertRaises(ValueError, leap_seconds, None)
+
         # Check expected input types do not raise an exception
         try:
             leap_seconds(self.MIN_VALUE)  # float
