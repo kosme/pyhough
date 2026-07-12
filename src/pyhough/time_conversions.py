@@ -78,12 +78,22 @@ def leap_seconds(mjd):
 
 
 def tdt2tdb(mjd):
-# % TDT2TDB  seconds to add to tdt (terrestrial dymamical time (TAI corrected)) 
-# %          to have tdb (barycentric dynamical time)
-# %
-# %   mjd   mjd value (days)
-# %
-# %   tdb   seconds to add to the tdt
+    """
+    Seconds to add to tdt (terrestrial dymamical time (TAI corrected)) 
+    to have tdb (barycentric dynamical time)
+    
+    Parameters
+    ----------
+    mjd : int, float, or np.ndarray
+        Modified Julian Date (days).
+
+    Returns
+    -------
+    tdb : float or ndarray
+        Seconds to add to the tdt
+    """
+    if not isinstance(mjd, (int, float, np.ndarray)) or type(mjd) is bool:
+        raise ValueError
 
     JD = mjd + 2400000.5
     g = np.mod(357.53 + 0.98560028 * (JD - 2451545.0),360) * np.pi/180

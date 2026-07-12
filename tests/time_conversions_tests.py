@@ -115,5 +115,42 @@ class Test_leapseconds(unittest.TestCase):
         self.assertEqual(leap_seconds(randVal), 37.0)
 
 
+class Test_tdt2tdb(unittest.TestCase):
+    def test_input_types(self):
+        self.assertRaises(ValueError, tdt2tdb, 'a')
+        self.assertRaises(ValueError, tdt2tdb, True)
+        self.assertRaises(ValueError, tdt2tdb, [12])
+        self.assertRaises(ValueError, tdt2tdb, (12, 13))
+        self.assertRaises(ValueError, tdt2tdb, object())
+        self.assertRaises(ValueError, tdt2tdb, None)
+
+        # Check expected input types do not raise an exception
+        try:
+            tdt2tdb(123)
+            tdt2tdb(123.0)
+            tdt2tdb(np.asarray([123], dtype=float))
+        except ValueError:
+            self.fail()
+
+    def test_output_types(self):
+        self.assertIsInstance(tdt2tdb(123), float)
+        self.assertIsInstance(tdt2tdb(123.0), float)
+        self.assertIsInstance(tdt2tdb(np.asarray([123.0, 123.0])), np.ndarray)
+
+    def test_input_values(self):
+        # Check that the input supports bith negative and positive values
+        try:
+            tdt2tdb(0)
+            tdt2tdb(475.0)
+            tdt2tdb(-10.0)
+        except ValueError:
+            self.fail()
+
+    def test_output_values(self):
+        self.assertAlmostEqual(tdt2tdb(0), -0.001181, 6)
+        self.assertAlmostEqual(tdt2tdb(475.0), 0.001494, 6)
+        self.assertAlmostEqual(tdt2tdb(-10.0), -0.001365, 6)
+
+
 if __name__ == '__main__':
     unittest.main()
