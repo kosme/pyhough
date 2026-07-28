@@ -116,6 +116,9 @@ def gmst(t):
         GMST in hours (range [0, 24)).
     """
 
+    if not isinstance(t, (float, np.ndarray)) or type(t) is bool:
+        raise ValueError
+
     t = np.asarray(t, dtype=float)
 
     # Convert MJD -> JD if needed

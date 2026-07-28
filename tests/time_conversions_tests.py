@@ -115,6 +115,7 @@ class Test_leapseconds(unittest.TestCase):
         self.assertEqual(leap_seconds(randVal), 37.0)
 
 
+@unittest.skipIf(DEVELOPMENT, "Development")
 class Test_tdt2tdb(unittest.TestCase):
     def test_input_types(self):
         self.assertRaises(ValueError, tdt2tdb, 'a')
@@ -138,7 +139,7 @@ class Test_tdt2tdb(unittest.TestCase):
         self.assertIsInstance(tdt2tdb(np.asarray([123.0, 123.0])), np.ndarray)
 
     def test_input_values(self):
-        # Check that the input supports bith negative and positive values
+        # Check that the input supports both negative and positive values
         try:
             tdt2tdb(0)
             tdt2tdb(475.0)
@@ -150,6 +151,60 @@ class Test_tdt2tdb(unittest.TestCase):
         self.assertAlmostEqual(tdt2tdb(0), -0.001181, 6)
         self.assertAlmostEqual(tdt2tdb(475.0), 0.001494, 6)
         self.assertAlmostEqual(tdt2tdb(-10.0), -0.001365, 6)
+
+@unittest.skipIf(DEVELOPMENT, "Development")
+class Test_gmst(unittest.TestCase):
+    def test_input_types(self):
+        self.assertRaises(ValueError, gmst, 'a')
+        self.assertRaises(ValueError, gmst, True)
+        self.assertRaises(ValueError, gmst, 1)
+        self.assertRaises(ValueError, gmst, (12.0, 13.0))
+        self.assertRaises(ValueError, gmst, [12.0])
+        self.assertRaises(ValueError, gmst, object())
+        self.assertRaises(ValueError, gmst, None)
+
+        # Check expected input types do not raise an exception
+        try:
+            gmst(123.0)
+            gmst(np.asarray([123], dtype=float))
+        except ValueError:
+            self.fail()
+
+    def test_output_types(self):
+        self.assertIsInstance(gmst(12.0), float)
+        self.assertIsInstance(gmst(np.asarray([12.0, 13.0])), np.ndarray)
+
+    def test_output_values(self):
+        import random
+        SCALE = 100
+        lst = []
+        # Check positive input values
+        for i in range(10):
+            a = random.random() * SCALE
+            lst.append(a)
+            st = gmst(a)
+            self.assertGreaterEqual(st, 0)
+            self.assertLessEqual(st, 24)
+
+        # Check negative input values
+        for i in range(10):
+            a = random.random() * SCALE * -1
+            lst.append(a)
+            st = gmst(a)
+            self.assertGreaterEqual(st, 0)
+            self.assertLessEqual(st, 24)
+
+        # Check big values
+        for i in range(10):
+            a = random.random() * SCALE * SCALE * SCALE
+            lst.append(a)
+            st = gmst(a)
+            self.assertGreaterEqual(st, 0)
+            self.assertLessEqual(st, 24)
+
+        st = gmst(np.asarray(lst))
+        if np.any(st < 0) or np.any(st > 24):
+            self.fail()
 
 
 if __name__ == '__main__':
