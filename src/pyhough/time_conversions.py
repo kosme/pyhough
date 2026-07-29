@@ -207,6 +207,16 @@ def mjuliandate(*args):
 
     if np.any(year < 1):
         raise ValueError("This function is intended for CE Gregorian dates only.")
+    if np.any(month < 1) or np.any(month > 12):
+        raise ValueError("Invalid month value")
+    if np.any(day < 1) or np.any(day > 31):
+        raise ValueError("Invalid day value")
+    if np.any(hour < 0) or np.any(hour > 23):
+        raise ValueError("Invalid hour value")
+    if np.any(minute < 0) or np.any(minute > 59):
+        raise ValueError("Invalid minute value")
+    if np.any(second < 0) or np.any(second >= 60):
+        raise ValueError("Invalid second value")
 
     jan_feb = month <= 2
     year[jan_feb] -= 1.0

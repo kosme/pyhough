@@ -152,6 +152,7 @@ class Test_tdt2tdb(unittest.TestCase):
         self.assertAlmostEqual(tdt2tdb(475.0), 0.001494, 6)
         self.assertAlmostEqual(tdt2tdb(-10.0), -0.001365, 6)
 
+
 @unittest.skipIf(DEVELOPMENT, "Development")
 class Test_gmst(unittest.TestCase):
     def test_input_types(self):
@@ -205,6 +206,129 @@ class Test_gmst(unittest.TestCase):
         st = gmst(np.asarray(lst))
         if np.any(st < 0) or np.any(st > 24):
             self.fail()
+
+
+@unittest.skipIf(DEVELOPMENT, "Development")
+class Test_mjuliandate(unittest.TestCase):
+    def setUp(self):
+        self.func = mjuliandate
+
+    def tearDown(self):
+        self.func = None
+
+    def test_input_number(self):
+        self.assertRaises(TypeError, self.func)
+        self.assertRaises(TypeError, self.func, 1, 2)
+        self.assertRaises(TypeError, self.func, 1, 2, 3, 4)
+        self.assertRaises(TypeError, self.func, 1, 2, 3, 4, 5)
+        self.assertRaises(TypeError, self.func, 1, 2, 3, 4, 5, 6, 7)
+
+        self.assertRaises(ValueError, self.func, [])
+        self.assertRaises(ValueError, self.func, [1])
+        self.assertRaises(ValueError, self.func, [1, 2])
+        self.assertRaises(ValueError, self.func, [1, 2, 3, 4])
+        self.assertRaises(ValueError, self.func, [1, 2, 3, 4, 5])
+        self.assertRaises(ValueError, self.func, [1, 2, 3, 4, 5, 6, 7])
+
+        try:
+            self.func([1, 2, 3])
+            self.func((1, 2, 3))
+            self.func(1, 2, 3)
+            self.func(1, 2, 3, 4, 5, 6)
+        except TypeError:
+            self.fail()
+
+    def test_input_types(self):
+        self.assertRaises(ValueError, self.func, ['a', object(), 'None'])
+        self.assertRaises(ValueError, self.func, [[1, 2, 3], [1, 2]])
+
+        try:
+            self.func(1.0, 2.0, 3.0, 4.0, 5.0, 6.0)
+            self.func(1, 2, 3)
+            self.func([[1, 2, 3], [4.0, 5.0, 6.0]])
+            self.func([[1.0, 2.0, 3.0, 4.0, 5.0, 6.0], [1, 2, 3, 4, 5, 6]])
+        except ValueError:
+            self.fail()
+
+    def test_input_values_date(self):
+        import random
+        # Bad years
+        self.assertRaises(ValueError, self.func,
+                          random.random(), 2, 3, 4, 5, 6)
+        self.assertRaises(ValueError, self.func,
+                          random.randint(-10000, -1), 2, 3, 4, 5, 6)
+        # Good years
+        try:
+            self.func(1, 2, 3, 4, 5, 6)
+            self.func(random.randint(2, 10000), 2, 3, 4, 5, 6)
+        except ValueError:
+            self.fail()
+
+        # Bad months
+        self.assertRaises(ValueError, self.func, 1, 13, 3, 4, 5, 6)
+        self.assertRaises(ValueError, self.func, 1, 0, 3, 4, 5, 6)
+        self.assertRaises(ValueError, self.func, 1, -1, 3, 4, 5, 6)
+        # Good Months
+        try:
+            self.func(1, 1, 3, 4, 5, 6)
+            self.func(1, 12, 3, 4, 5, 6)
+            self.func(1, random.randint(2, 11), 3, 4, 5, 6)
+        except ValueError:
+            self.fail()
+
+        # Bad days
+        self.assertRaises(ValueError, self.func, 1, 1, 31 +
+                          random.randint(1, 31), 4, 5, 6)
+        self.assertRaises(ValueError, self.func, 1, 1, 0, 4, 5, 6)
+        self.assertRaises(ValueError, self.func, 1, 1,
+                          random.randint(-31, -1), 4, 5, 6)
+        # Good days
+        try:
+            self.func(1, 2, 1, 4, 5, 6)
+            self.func(1, 2, 31, 4, 5, 6)
+            self.func(1, 2, random.randint(2, 30), 4, 5, 6)
+        except ValueError:
+            self.fail()
+
+    def test_input_values_time(self):
+        import random
+        # Bad hours
+        self.assertRaises(ValueError, self.func, 1, 2, 3, -1, 5, 6)
+        self.assertRaises(ValueError, self.func, 1, 2, 3, 24, 5, 6)
+        # Good hours
+        try:
+            self.func(1, 2, 3, 0, 5, 6)
+            self.func(1, 2, 3, 23, 5, 6)
+            self.func(1, 2, 3, random.randint(2, 22), 5, 6)
+        except ValueError:
+            self.fail()
+
+        # Bad minutes
+        self.assertRaises(ValueError, self.func, 1, 2, 3, 4, -1, 6)
+        self.assertRaises(ValueError, self.func, 1, 2, 3, 4, 60, 6)
+        # Good minutes
+        try:
+            self.func(1, 2, 3, 4, 0, 6)
+            self.func(1, 2, 3, 4, 59, 6)
+            self.func(1, 2, 3, 4, random.randint(2, 58), 6)
+        except ValueError:
+            self.fail()
+
+        # Bad seconds
+        self.assertRaises(ValueError, self.func, 1, 2, 3, 4, 5, -1)
+        self.assertRaises(ValueError, self.func, 1, 2, 3, 4, 5, 60)
+        # Good seconds
+        try:
+            self.func(1, 2, 3, 4, 5, 0)
+            self.func(1, 2, 3, 4, 5, 59)
+            self.func(1, 2, 3, 4, 5, 59 + random.random())
+            self.func(1, 2, 3, 4, 5, random.randint(2, 58))
+        except ValueError:
+            self.fail()
+
+    def test_output_values(self):
+        self.assertAlmostEqual(self.func(2001, 2, 3, 4, 5, 0), 51943.17013889)
+        self.assertAlmostEqual(self.func(1980, 1, 1, 0, 0, 0), 44239.00000000)
 
 
 if __name__ == '__main__':
