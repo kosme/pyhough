@@ -241,8 +241,6 @@ def mjuliandate(*args):
 
     return mjd
 
-from datetime import datetime
-
 
 def utc2gps(*args):
     """
@@ -254,19 +252,22 @@ def utc2gps(*args):
         utc2gps(year, month, day, hour, minute, second)
     """
 
-    if len(args) == 1 and isinstance(args[0], str):
-        dt = datetime.fromisoformat(args[0])
+    if len(args) == 1: 
+        if isinstance(args[0], str):
+            dt = datetime.fromisoformat(args[0])
 
-        return mjd2gps(
-            mjuliandate(
-                dt.year,
-                dt.month,
-                dt.day,
-                dt.hour,
-                dt.minute,
-                dt.second + dt.microsecond / 1e6,
+            return mjd2gps(
+                mjuliandate(
+                    dt.year,
+                    dt.month,
+                    dt.day,
+                    dt.hour,
+                    dt.minute,
+                    dt.second + dt.microsecond / 1e6,
+                )
             )
-        )
+        else:
+            raise TypeError("utc2gps expects either an ISO string")
 
     if len(args) == 3:
         year, month, day = args
@@ -277,10 +278,14 @@ def utc2gps(*args):
 
     else:
         raise TypeError(
-            "utc2gps expects either an ISO string, "
+            "utc2gps expects either "
             "utc2gps(year, month, day), or "
             "utc2gps(year, month, day, hour, minute, second)."
         )
+
+    for arg, name in zip([year, month, day, hour, minute, second], ["year", "month", "day", "hour", "minute", "second"]):
+        if not isinstance(arg, (int, float)) or type(arg) is bool:
+            raise TypeError(f"{name} must be a numeric value")
 
     return mjd2gps(
         mjuliandate(year, month, day, hour, minute, second)

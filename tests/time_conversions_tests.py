@@ -331,5 +331,154 @@ class Test_mjuliandate(unittest.TestCase):
         self.assertAlmostEqual(self.func(1980, 1, 1, 0, 0, 0), 44239.00000000)
 
 
+@unittest.skipIf(DEVELOPMENT, "Development")
+class Test_utc2gps(unittest.TestCase):
+    def setUp(self):
+        self.func = utc2gps
+
+    def tearDown(self):
+        self.func = None
+
+    def test_input_arg_number(self):
+        # Test rejection of wrong numbeer of arguments
+        self.assertRaises(TypeError, self.func)
+        self.assertRaises(TypeError, self.func, 1, 2)
+        self.assertRaises(TypeError, self.func, 1, 2, 3, 4)
+        self.assertRaises(TypeError, self.func, 1, 2, 3, 4, 5)
+        self.assertRaises(TypeError, self.func, 1, 2, 3, 4, 5, 6, 7)
+
+        try:
+            self.func("2023-05-24T22:00:00")
+            self.func(1, 2, 3)
+            self.func(1, 2, 3, 4, 5, 6)
+        except ValueError:
+            # Ignore errors related to arg values
+            pass
+        except TypeError:
+            # Fail on arg type exceptions
+            self.fail()
+
+    def test_input_correct_number_bad_type(self):
+        # One arg, wrong type (must be a string)
+        self.assertRaises(TypeError, self.func, 1)
+        self.assertRaises(TypeError, self.func, object())
+        self.assertRaises(TypeError, self.func, None)
+        self.assertRaises(TypeError, self.func, True)
+        self.assertRaises(TypeError, self.func, [1])
+
+        # Three args, wrong types (must all be numbers)
+        self.assertRaises(TypeError, self.func, '1', object(), None)
+        self.assertRaises(TypeError, self.func, True, (True), [None])
+        self.assertRaises(TypeError, self.func, 1, (True), 3)
+
+        # Six args, wrong types (must all be numbers)
+        self.assertRaises(TypeError, self.func, '1',
+                          object(), None, True, (True), [1])
+        self.assertRaises(TypeError, self.func, 1, 2, 3, 4, 5, [1])
+
+    def test_input_bad_ISO_values(self):
+        # Bad string
+        self.assertRaises(ValueError, self.func, "bad string")
+        # Almost correct input (Extra characters)
+        self.assertRaises(ValueError, self.func, "2023-05-24T22:00:00UTC+8")
+        # Missing field from date
+        self.assertRaises(ValueError, self.func, "2023-05")
+
+    def test_input_good_ISO_values(self):
+        try:
+            # Should not fail if missing time field(s) from ISO string
+            self.func("2023-05-24")
+            self.func("2023-05-24T22")
+            self.func("2023-05-24T23:00")
+            # Should not fail with a good ISO string
+            self.func("2023-05-24T22:00:00")
+        except ValueError:
+            self.fail()
+
+    def test_input_values_date(self):
+        import random
+        # Bad years
+        self.assertRaises(ValueError, self.func,
+                          random.random(), 2, 3, 4, 5, 6)
+        self.assertRaises(ValueError, self.func,
+                          random.randint(-10000, -1), 2, 3, 4, 5, 6)
+        # Good years
+        try:
+            self.func(1972, 2, 3, 4, 5, 6)
+            self.func(random.randint(1973, 10000), 2, 3, 4, 5, 6)
+        except ValueError as ex:
+            self.fail()
+
+        # Bad months
+        self.assertRaises(ValueError, self.func, 1972, 13, 3, 4, 5, 6)
+        self.assertRaises(ValueError, self.func, 1972, 0, 3, 4, 5, 6)
+        self.assertRaises(ValueError, self.func, 1972, -1, 3, 4, 5, 6)
+        # Good Months
+        try:
+            self.func(1972, 1, 3, 4, 5, 6)
+            self.func(1972, 12, 3, 4, 5, 6)
+            self.func(1972, random.randint(2, 11), 3, 4, 5, 6)
+        except ValueError:
+            self.fail()
+
+        # Bad days
+        self.assertRaises(ValueError, self.func, 1972, 1, 31 +
+                          random.randint(1, 31), 4, 5, 6)
+        self.assertRaises(ValueError, self.func, 1972, 1, 0, 4, 5, 6)
+        self.assertRaises(ValueError, self.func, 1972, 1,
+                          random.randint(-31, -1), 4, 5, 6)
+        # Good days
+        try:
+            self.func(1972, 2, 1, 4, 5, 6)
+            self.func(1972, 2, 31, 4, 5, 6)
+            self.func(1972, 2, random.randint(2, 30), 4, 5, 6)
+        except ValueError:
+            self.fail()
+
+    def test_input_values_time(self):
+        import random
+        # Bad hours
+        self.assertRaises(ValueError, self.func, 1972, 2, 3, -1, 5, 6)
+        self.assertRaises(ValueError, self.func, 1972, 2, 3, 24, 5, 6)
+        # Good hours
+        try:
+            self.func(1972, 2, 3, 0, 5, 6)
+            self.func(1972, 2, 3, 23, 5, 6)
+            self.func(1972, 2, 3, random.randint(2, 22), 5, 6)
+        except ValueError:
+            self.fail()
+
+        # Bad minutes
+        self.assertRaises(ValueError, self.func, 1972, 2, 3, 4, -1, 6)
+        self.assertRaises(ValueError, self.func, 1972, 2, 3, 4, 60, 6)
+        # Good minutes
+        try:
+            self.func(1972, 2, 3, 4, 0, 6)
+            self.func(1972, 2, 3, 4, 59, 6)
+            self.func(1972, 2, 3, 4, random.randint(2, 58), 6)
+        except ValueError:
+            self.fail()
+
+        # Bad seconds
+        self.assertRaises(ValueError, self.func, 1972, 2, 3, 4, 5, -1)
+        self.assertRaises(ValueError, self.func, 1972, 2, 3, 4, 5, 60)
+        # Good seconds
+        try:
+            self.func(1972, 2, 3, 4, 5, 0)
+            self.func(1972, 2, 3, 4, 5, 59)
+            self.func(1972, 2, 3, 4, 5, 59 + random.random())
+            self.func(1972, 2, 3, 4, 5, random.randint(2, 58))
+        except ValueError:
+            self.fail()
+
+    def test_output_type(self):
+        self.assertEqual(type(self.func(2001, 2, 3, 4, 5, 0)), float)
+
+    def test_output_values(self):
+        self.assertAlmostEqual(
+            self.func(2001, 2, 3, 4, 5, 0), 665208313.000, 6)
+        self.assertAlmostEqual(self.func(1980, 1, 1, 0, 0, 0), -432000.000, 6)
+
+
 if __name__ == '__main__':
     unittest.main()
