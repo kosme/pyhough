@@ -93,7 +93,7 @@ def tdt2tdb(mjd):
         Seconds to add to the tdt
     """
     if not isinstance(mjd, (int, float, np.ndarray)) or type(mjd) is bool:
-        raise ValueError
+        raise TypeError
 
     JD = mjd + 2400000.5
     g = np.mod(357.53 + 0.98560028 * (JD - 2451545.0),360) * np.pi/180

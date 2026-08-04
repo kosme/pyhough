@@ -117,12 +117,12 @@ class Test_leapseconds(unittest.TestCase):
 @unittest.skipIf(DEVELOPMENT, "Development")
 class Test_tdt2tdb(unittest.TestCase):
     def test_input_types(self):
-        self.assertRaises(ValueError, tdt2tdb, 'a')
-        self.assertRaises(ValueError, tdt2tdb, True)
-        self.assertRaises(ValueError, tdt2tdb, [12])
-        self.assertRaises(ValueError, tdt2tdb, (12, 13))
-        self.assertRaises(ValueError, tdt2tdb, object())
-        self.assertRaises(ValueError, tdt2tdb, None)
+        self.assertRaises(TypeError, tdt2tdb, 'a')
+        self.assertRaises(TypeError, tdt2tdb, True)
+        self.assertRaises(TypeError, tdt2tdb, [12])
+        self.assertRaises(TypeError, tdt2tdb, (12, 13))
+        self.assertRaises(TypeError, tdt2tdb, object())
+        self.assertRaises(TypeError, tdt2tdb, None)
 
         # Check expected input types do not raise an exception
         try:
