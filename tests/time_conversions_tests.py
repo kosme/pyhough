@@ -1,6 +1,7 @@
 from time_conversions import *
 import numpy as np
 import unittest
+import random
 
 DEVELOPMENT = False
 
@@ -77,7 +78,6 @@ class Test_leapseconds(unittest.TestCase):
                               (int, float, np.ndarray))
 
     def test_input_values(self):
-        import random
         # Random value below the first defined value
         self.assertRaises(ValueError, leap_seconds,
                           random.random() * self.MIN_VALUE)
@@ -99,7 +99,6 @@ class Test_leapseconds(unittest.TestCase):
             self.fail()
 
     def test_output_values(self):
-        import random
         self.assertEqual(leap_seconds(self.MIN_VALUE), 10)
         self.assertListEqual(
             list(leap_seconds([self.MIN_VALUE, self.MAX_VALUE])), [10.0, 37.0])
@@ -176,7 +175,6 @@ class Test_gmst(unittest.TestCase):
         self.assertIsInstance(gmst(np.asarray([12.0, 13.0])), np.ndarray)
 
     def test_output_values(self):
-        import random
         SCALE = 100
         lst = []
         # Check positive input values
@@ -250,25 +248,25 @@ class Test_mjuliandate(unittest.TestCase):
         except ValueError:
             self.fail()
 
-    def test_input_values_date(self):
-        import random
-        # Bad years
+    def test_input_values_date_year(self):
+        # Bad values
         self.assertRaises(ValueError, self.func,
                           random.random(), 2, 3, 4, 5, 6)
         self.assertRaises(ValueError, self.func,
                           random.randint(-10000, -1), 2, 3, 4, 5, 6)
-        # Good years
+        # Good values
         try:
             self.func(1, 2, 3, 4, 5, 6)
             self.func(random.randint(2, 10000), 2, 3, 4, 5, 6)
         except ValueError:
             self.fail()
 
-        # Bad months
+    def test_input_values_date_month(self):
+        # Bad values
         self.assertRaises(ValueError, self.func, 1, 13, 3, 4, 5, 6)
         self.assertRaises(ValueError, self.func, 1, 0, 3, 4, 5, 6)
         self.assertRaises(ValueError, self.func, 1, -1, 3, 4, 5, 6)
-        # Good Months
+        # Good values
         try:
             self.func(1, 1, 3, 4, 5, 6)
             self.func(1, 12, 3, 4, 5, 6)
@@ -276,13 +274,14 @@ class Test_mjuliandate(unittest.TestCase):
         except ValueError:
             self.fail()
 
-        # Bad days
+    def test_input_values_date_day(self):
+        # Bad values
         self.assertRaises(ValueError, self.func, 1, 1, 31 +
                           random.randint(1, 31), 4, 5, 6)
         self.assertRaises(ValueError, self.func, 1, 1, 0, 4, 5, 6)
         self.assertRaises(ValueError, self.func, 1, 1,
                           random.randint(-31, -1), 4, 5, 6)
-        # Good days
+        # Good values
         try:
             self.func(1, 2, 1, 4, 5, 6)
             self.func(1, 2, 31, 4, 5, 6)
@@ -290,12 +289,11 @@ class Test_mjuliandate(unittest.TestCase):
         except ValueError:
             self.fail()
 
-    def test_input_values_time(self):
-        import random
-        # Bad hours
+    def test_input_values_time_hour(self):
+        # Bad values
         self.assertRaises(ValueError, self.func, 1, 2, 3, -1, 5, 6)
         self.assertRaises(ValueError, self.func, 1, 2, 3, 24, 5, 6)
-        # Good hours
+        # Good values
         try:
             self.func(1, 2, 3, 0, 5, 6)
             self.func(1, 2, 3, 23, 5, 6)
@@ -303,10 +301,11 @@ class Test_mjuliandate(unittest.TestCase):
         except ValueError:
             self.fail()
 
-        # Bad minutes
+    def test_input_values_time_minute(self):
+        # Bad values
         self.assertRaises(ValueError, self.func, 1, 2, 3, 4, -1, 6)
         self.assertRaises(ValueError, self.func, 1, 2, 3, 4, 60, 6)
-        # Good minutes
+        # Good values
         try:
             self.func(1, 2, 3, 4, 0, 6)
             self.func(1, 2, 3, 4, 59, 6)
@@ -314,10 +313,11 @@ class Test_mjuliandate(unittest.TestCase):
         except ValueError:
             self.fail()
 
-        # Bad seconds
+    def test_input_values_time_second(self):
+        # Bad values
         self.assertRaises(ValueError, self.func, 1, 2, 3, 4, 5, -1)
         self.assertRaises(ValueError, self.func, 1, 2, 3, 4, 5, 60)
-        # Good seconds
+        # Good values
         try:
             self.func(1, 2, 3, 4, 5, 0)
             self.func(1, 2, 3, 4, 5, 59)
@@ -395,25 +395,25 @@ class Test_utc2gps(unittest.TestCase):
         except ValueError:
             self.fail()
 
-    def test_input_values_date(self):
-        import random
-        # Bad years
+    def test_input_values_date_year(self):
+        # Bad values
         self.assertRaises(ValueError, self.func,
                           random.random(), 2, 3, 4, 5, 6)
         self.assertRaises(ValueError, self.func,
                           random.randint(-10000, -1), 2, 3, 4, 5, 6)
-        # Good years
+        # Good values
         try:
             self.func(1972, 2, 3, 4, 5, 6)
             self.func(random.randint(1973, 10000), 2, 3, 4, 5, 6)
         except ValueError as ex:
             self.fail()
 
-        # Bad months
+    def test_input_values_date_month(self):
+        # Bad values
         self.assertRaises(ValueError, self.func, 1972, 13, 3, 4, 5, 6)
         self.assertRaises(ValueError, self.func, 1972, 0, 3, 4, 5, 6)
         self.assertRaises(ValueError, self.func, 1972, -1, 3, 4, 5, 6)
-        # Good Months
+        # Good values
         try:
             self.func(1972, 1, 3, 4, 5, 6)
             self.func(1972, 12, 3, 4, 5, 6)
@@ -421,13 +421,14 @@ class Test_utc2gps(unittest.TestCase):
         except ValueError:
             self.fail()
 
-        # Bad days
+    def test_input_values_date_day(self):
+        # Bad values
         self.assertRaises(ValueError, self.func, 1972, 1, 31 +
                           random.randint(1, 31), 4, 5, 6)
         self.assertRaises(ValueError, self.func, 1972, 1, 0, 4, 5, 6)
         self.assertRaises(ValueError, self.func, 1972, 1,
                           random.randint(-31, -1), 4, 5, 6)
-        # Good days
+        # Good values
         try:
             self.func(1972, 2, 1, 4, 5, 6)
             self.func(1972, 2, 31, 4, 5, 6)
@@ -435,12 +436,11 @@ class Test_utc2gps(unittest.TestCase):
         except ValueError:
             self.fail()
 
-    def test_input_values_time(self):
-        import random
-        # Bad hours
+    def test_input_values_time_hour(self):
+        # Bad values
         self.assertRaises(ValueError, self.func, 1972, 2, 3, -1, 5, 6)
         self.assertRaises(ValueError, self.func, 1972, 2, 3, 24, 5, 6)
-        # Good hours
+        # Good values
         try:
             self.func(1972, 2, 3, 0, 5, 6)
             self.func(1972, 2, 3, 23, 5, 6)
@@ -448,10 +448,11 @@ class Test_utc2gps(unittest.TestCase):
         except ValueError:
             self.fail()
 
-        # Bad minutes
+    def test_input_values_time_minute(self):
+        # Bad values
         self.assertRaises(ValueError, self.func, 1972, 2, 3, 4, -1, 6)
         self.assertRaises(ValueError, self.func, 1972, 2, 3, 4, 60, 6)
-        # Good minutes
+        # Good values
         try:
             self.func(1972, 2, 3, 4, 0, 6)
             self.func(1972, 2, 3, 4, 59, 6)
@@ -459,10 +460,11 @@ class Test_utc2gps(unittest.TestCase):
         except ValueError:
             self.fail()
 
-        # Bad seconds
+    def test_input_values_time_second(self):
+        # Bad values
         self.assertRaises(ValueError, self.func, 1972, 2, 3, 4, 5, -1)
         self.assertRaises(ValueError, self.func, 1972, 2, 3, 4, 5, 60)
-        # Good seconds
+        # Good values
         try:
             self.func(1972, 2, 3, 4, 5, 0)
             self.func(1972, 2, 3, 4, 5, 59)
