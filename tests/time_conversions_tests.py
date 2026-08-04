@@ -480,5 +480,38 @@ class Test_utc2gps(unittest.TestCase):
         self.assertAlmostEqual(self.func(1980, 1, 1, 0, 0, 0), -432000.000, 6)
 
 
+class Test_mjd2gps(unittest.TestCase):
+    def setUp(self):
+        self.func = mjd2gps
+
+    def tearDown(self):
+        self.func = None
+
+    def test_input_types(self):
+        self.assertRaises(TypeError, self.func, 0)
+        self.assertRaises(TypeError, self.func, 'a')
+        self.assertRaises(TypeError, self.func, ['a'])
+        self.assertRaises(TypeError, self.func, None)
+        self.assertRaises(TypeError, self.func, object())
+        self.assertRaises(TypeError, self.func, True)
+
+        # Check the expected types don't fail
+        try:
+            self.func(44250.0)
+            self.func(np.asarray([41319.0, 54321.123]))
+        except TypeError:
+            self.fail()
+
+    def test_output_type(self):
+        self.assertIsInstance(self.func(44250.0), float)
+        self.assertIsInstance(
+            self.func(np.asarray([41319.0, 54321.123])), np.ndarray)
+
+    def test_output_value(self):
+        self.assertAlmostEqual(self.func(44250.0), 518400.000)
+        for val, expected in zip(self.func(np.asarray([41319.0, 54321.123])), [-252720009.000, 870663441.200]):
+            self.assertAlmostEqual(val, expected, 6)
+
+
 if __name__ == '__main__':
     unittest.main()
