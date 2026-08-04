@@ -10,12 +10,12 @@ DEVELOPMENT = False
 class Test_gps2mjd(unittest.TestCase):
     def test_input_types(self):
         # Basic types that must be rejected
-        self.assertRaises(ValueError, gps2mjd, '0')
-        self.assertRaises(ValueError, gps2mjd, 0)
-        self.assertRaises(ValueError, gps2mjd, True)
+        self.assertRaises(TypeError, gps2mjd, '0')
+        self.assertRaises(TypeError, gps2mjd, 0)
+        self.assertRaises(TypeError, gps2mjd, True)
+        self.assertRaises(TypeError, tdt2tdb, object())
+        self.assertRaises(TypeError, tdt2tdb, None)
         self.assertRaises(ValueError, gps2mjd, ['a', 'b'])
-        self.assertRaises(ValueError, tdt2tdb, object())
-        self.assertRaises(ValueError, tdt2tdb, None)
 
         # Check expected input types do not raise an exception
         try:

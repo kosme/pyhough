@@ -17,7 +17,7 @@ def gps2mjd(tgps):
     
     # Reject wrong input types
     if not isinstance(tgps, (float, list, tuple, np.ndarray)):
-        raise ValueError
+        raise TypeError
 
     tgps = np.asarray(tgps, dtype=float)
 
