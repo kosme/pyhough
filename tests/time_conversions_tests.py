@@ -50,12 +50,12 @@ class Test_leapseconds(unittest.TestCase):
 
     def test_input_types(self):
         # Basic types that must be rejected
-        self.assertRaises(ValueError, leap_seconds, '0')
-        self.assertRaises(ValueError, leap_seconds, 41317)
-        self.assertRaises(ValueError, leap_seconds, True)
+        self.assertRaises(TypeError, leap_seconds, '0')
+        self.assertRaises(TypeError, leap_seconds, 41317)
+        self.assertRaises(TypeError, leap_seconds, True)
+        self.assertRaises(TypeError, leap_seconds, object())
+        self.assertRaises(TypeError, leap_seconds, None)
         self.assertRaises(ValueError, leap_seconds, ['a', 'b'])
-        self.assertRaises(ValueError, leap_seconds, object())
-        self.assertRaises(ValueError, leap_seconds, None)
 
         # Check expected input types do not raise an exception
         try:

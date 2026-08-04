@@ -327,7 +327,7 @@ def leap_seconds(mjd):
     """
 
     if not isinstance(mjd,(float, list, tuple, np.ndarray)):
-        raise ValueError
+        raise TypeError
 
     leaptimes = np.array([
         41317,  # 1972 Jan 1,  TAI-UTC = 10
