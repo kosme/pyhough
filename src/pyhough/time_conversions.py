@@ -3,6 +3,9 @@ import numpy as np
 from datetime import datetime, timezone
 
 GPS_EPOCH = datetime(1980, 1, 6, tzinfo=timezone.utc)
+SECONDS_IN_DAY = 86400.0
+MJD_AT_GPS_EPOCH = 44244.0 # 6-Jan-1980 00:00:00
+TAI_UTC_AT_GPS_EPOCH = 19.0
 
 def gps2mjd(tgps):
     """
@@ -25,12 +28,10 @@ def gps2mjd(tgps):
 
     tgps = np.asarray(tgps, dtype=float)
 
-    t0 = 44244.0  # MJD at GPS epoch (6-Jan-1980 00:00:00)
-
-    mjd = tgps / SECONDS_IN_DAY + t0
+    mjd = tgps / SECONDS_IN_DAY + MJD_AT_GPS_EPOCH
 
     # Leap second correction (GPS linked to TAI, offset from UTC)
-    mjd = mjd - (leap_seconds(mjd) - 19.0) / 86400.0
+    mjd = mjd - (leap_seconds(mjd) - TAI_UTC_AT_GPS_EPOCH) / SECONDS_IN_DAY
     
     # Ensure output type consistency
     if not isinstance(mjd, np.ndarray):
@@ -300,9 +301,7 @@ def mjd2gps(mjd):
     gps : float or ndarray
     """
 
-    t0 = 44244.0
-
-    return (mjd - t0) * 86400.0 + (leap_seconds(mjd) - 19.0)
+    return (mjd - MJD_AT_GPS_EPOCH) * SECONDS_IN_DAY + (leap_seconds(mjd) - TAI_UTC_AT_GPS_EPOCH)
 
 def leap_seconds(mjd):
     """
