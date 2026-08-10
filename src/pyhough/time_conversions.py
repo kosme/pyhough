@@ -6,6 +6,7 @@ GPS_EPOCH = datetime(1980, 1, 6, tzinfo=timezone.utc)
 SECONDS_IN_DAY = 86400.0
 MJD_AT_GPS_EPOCH = 44244.0 # 6-Jan-1980 00:00:00
 TAI_UTC_AT_GPS_EPOCH = 19.0
+BASE_TAI_UTC = 10
 
 def gps2mjd(tgps):
     """
@@ -309,7 +310,7 @@ def leap_seconds(mjd):
         57754,  # 2017 Jan 1,  TAI-UTC = 37
     ], dtype=float)
 
-    tai_minus_utc_values = np.arange(10, 38, dtype=float)
+    tai_minus_utc_values = np.arange(BASE_TAI_UTC, BASE_TAI_UTC + len(leaptimes), dtype=float)
 
     mjd_arr = np.asarray(mjd, dtype=float)
 
