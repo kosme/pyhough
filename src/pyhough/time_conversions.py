@@ -234,7 +234,7 @@ def mjuliandate(*args):
     mjd = mjd_day + day_fraction
 
     if mjd.size == 1:
-        return float(mjd)
+        return float(mjd.item())
 
     return mjd
 
