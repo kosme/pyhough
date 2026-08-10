@@ -1,6 +1,7 @@
 from time_conversions import *
 import numpy as np
 import unittest
+import test_helpers
 import random
 
 DEVELOPMENT = False
@@ -230,7 +231,7 @@ class Test_gmst(unittest.TestCase):
 
 
 @unittest.skipIf(DEVELOPMENT, "Development")
-class Test_mjuliandate(unittest.TestCase):
+class Test_mjuliandate(test_helpers.Test_Helpers):
     def setUp(self):
         self.func = mjuliandate
 
@@ -238,38 +239,31 @@ class Test_mjuliandate(unittest.TestCase):
         self.func = None
 
     def test_input_number(self):
-        self.assertRaises(TypeError, self.func)
-        self.assertRaises(TypeError, self.func, 1, 2)
-        self.assertRaises(TypeError, self.func, 1, 2, 3, 4)
-        self.assertRaises(TypeError, self.func, 1, 2, 3, 4, 5)
-        self.assertRaises(TypeError, self.func, 1, 2, 3, 4, 5, 6, 7)
+        # No args, 2 args, 4 args, 5 args, 7 args
+        self.assert_raises_exception(TypeError, [], [1]*2,
+                                     [1]*4, [1]*5, [1]*7)
 
-        self.assertRaises(ValueError, self.func, [])
-        self.assertRaises(ValueError, self.func, [1])
-        self.assertRaises(ValueError, self.func, [1, 2])
-        self.assertRaises(ValueError, self.func, [1, 2, 3, 4])
-        self.assertRaises(ValueError, self.func, [1, 2, 3, 4, 5])
-        self.assertRaises(ValueError, self.func, [1, 2, 3, 4, 5, 6, 7])
+        # Empty list, 1-elem list, 2-elem list, 4-elem list, 5-elem list, 7-elem list
+        self.assert_raises_exception(ValueError, [[]], [[1]],
+                                     [[1]*2], [[1]*4], [[1]*5], [[1]*7])
 
-        try:
-            self.func([1, 2, 3])
-            self.func((1, 2, 3))
-            self.func(1, 2, 3)
-            self.func(1, 2, 3, 4, 5, 6)
-        except TypeError:
-            self.fail()
+        # 3 args, 6 args, 3-elem tuple, 6-elem tuple, 3-elem list, 6-elem list,
+        self.assert_not_raises_exception(TypeError, [1]*3, [1]*6, [(1, 2, 3)],
+                                         [(1, 2, 3, 4, 5, 6)], [[1]*3], [[1]*6])
 
     def test_input_types(self):
-        self.assertRaises(ValueError, self.func, ['a', object(), 'None'])
-        self.assertRaises(ValueError, self.func, [[1, 2, 3], [1, 2]])
+        # 1 arg, wrong type
+        self.assertRaises(IndexError, self.func, 1)
 
-        try:
-            self.func(1.0, 2.0, 3.0, 4.0, 5.0, 6.0)
-            self.func(1, 2, 3)
-            self.func([[1, 2, 3], [4.0, 5.0, 6.0]])
-            self.func([[1.0, 2.0, 3.0, 4.0, 5.0, 6.0], [1, 2, 3, 4, 5, 6]])
-        except ValueError:
-            self.fail()
+        # 3 args, wrong types
+        self.assertRaises(ValueError, self.func, ['a', object(), 'None'])
+
+        # 1 arg, list with different sized elements
+        self.assertRaises(ValueError, self.func, [[1]*3, [1]*2])
+
+        # 6 floats, 3 ints, list with size 3 elements, list with size 6 elements
+        self.assert_not_raises_exception(ValueError, [1.0]*6, [1]*3,
+                                         [[[1]*3, [2.0]*3]], [[[1.0]*6, [1]*6]])
 
     def test_input_values_date_year(self):
         # Bad values
@@ -278,11 +272,10 @@ class Test_mjuliandate(unittest.TestCase):
         self.assertRaises(ValueError, self.func,
                           random.randint(-10000, -1), 2, 3, 4, 5, 6)
         # Good values
-        try:
-            self.func(1, 2, 3, 4, 5, 6)
-            self.func(random.randint(2, 10000), 2, 3, 4, 5, 6)
-        except ValueError:
-            self.fail()
+        test_vals = []
+        for y in [1, random.randint(2, 10000), random.randint(2, 10000)]:
+            test_vals.append([y, 2, 3, 4, 5, 6])
+        self.assert_not_raises_exception(ValueError, *test_vals)
 
     def test_input_values_date_month(self):
         # Bad values
@@ -290,12 +283,10 @@ class Test_mjuliandate(unittest.TestCase):
         self.assertRaises(ValueError, self.func, 1, 0, 3, 4, 5, 6)
         self.assertRaises(ValueError, self.func, 1, -1, 3, 4, 5, 6)
         # Good values
-        try:
-            self.func(1, 1, 3, 4, 5, 6)
-            self.func(1, 12, 3, 4, 5, 6)
-            self.func(1, random.randint(2, 11), 3, 4, 5, 6)
-        except ValueError:
-            self.fail()
+        test_vals = []
+        for m in [1, 12, random.randint(2, 11), random.randint(2, 11)]:
+            test_vals.append([1, m, 3, 4, 5, 6])
+        self.assert_not_raises_exception(ValueError, *test_vals)
 
     def test_input_values_date_day(self):
         # Bad values
@@ -305,49 +296,41 @@ class Test_mjuliandate(unittest.TestCase):
         self.assertRaises(ValueError, self.func, 1, 1,
                           random.randint(-31, -1), 4, 5, 6)
         # Good values
-        try:
-            self.func(1, 2, 1, 4, 5, 6)
-            self.func(1, 2, 31, 4, 5, 6)
-            self.func(1, 2, random.randint(2, 30), 4, 5, 6)
-        except ValueError:
-            self.fail()
+        test_vals = []
+        for d in [1, 31, random.randint(2, 30), random.randint(2, 30)]:
+            test_vals.append([1, 3, d, 4, 5, 6])
+        self.assert_not_raises_exception(ValueError, *test_vals)
 
     def test_input_values_time_hour(self):
         # Bad values
         self.assertRaises(ValueError, self.func, 1, 2, 3, -1, 5, 6)
         self.assertRaises(ValueError, self.func, 1, 2, 3, 24, 5, 6)
         # Good values
-        try:
-            self.func(1, 2, 3, 0, 5, 6)
-            self.func(1, 2, 3, 23, 5, 6)
-            self.func(1, 2, 3, random.randint(2, 22), 5, 6)
-        except ValueError:
-            self.fail()
+        test_vals = []
+        for h in [0, 23, random.randint(1, 22), random.randint(1, 22)]:
+            test_vals.append([1, 2, 3, h, 5, 6])
+        self.assert_not_raises_exception(ValueError, *test_vals)
 
     def test_input_values_time_minute(self):
         # Bad values
         self.assertRaises(ValueError, self.func, 1, 2, 3, 4, -1, 6)
         self.assertRaises(ValueError, self.func, 1, 2, 3, 4, 60, 6)
         # Good values
-        try:
-            self.func(1, 2, 3, 4, 0, 6)
-            self.func(1, 2, 3, 4, 59, 6)
-            self.func(1, 2, 3, 4, random.randint(2, 58), 6)
-        except ValueError:
-            self.fail()
+        test_vals = []
+        for m in [0, 59, random.randint(1, 58), random.randint(1, 58)]:
+            test_vals.append([1, 2, 3, 4, m, 6])
+        self.assert_not_raises_exception(ValueError, *test_vals)
 
     def test_input_values_time_second(self):
         # Bad values
         self.assertRaises(ValueError, self.func, 1, 2, 3, 4, 5, -1)
         self.assertRaises(ValueError, self.func, 1, 2, 3, 4, 5, 60)
         # Good values
-        try:
-            self.func(1, 2, 3, 4, 5, 0)
-            self.func(1, 2, 3, 4, 5, 59)
-            self.func(1, 2, 3, 4, 5, 59 + random.random())
-            self.func(1, 2, 3, 4, 5, random.randint(2, 58))
-        except ValueError:
-            self.fail()
+        test_vals = []
+        for s in [0, 59, random.randint(1, 58), random.randint(1, 58),
+                  59 + random.random(), 59 + random.random()]:
+            test_vals.append([1, 2, 3, 4, 5, s])
+        self.assert_not_raises_exception(ValueError, *test_vals)
 
     def test_output_values(self):
         self.assertAlmostEqual(self.func(2001, 2, 3, 4, 5, 0), 51943.17013889)
@@ -355,49 +338,53 @@ class Test_mjuliandate(unittest.TestCase):
 
 
 @unittest.skipIf(DEVELOPMENT, "Development")
-class Test_utc2gps(unittest.TestCase):
+class Test_utc2gps(test_helpers.Test_Helpers):
     def setUp(self):
         self.func = utc2gps
 
     def tearDown(self):
         self.func = None
 
-    def test_input_arg_number(self):
-        # Test rejection of wrong numbeer of arguments
-        self.assertRaises(TypeError, self.func)
-        self.assertRaises(TypeError, self.func, 1, 2)
-        self.assertRaises(TypeError, self.func, 1, 2, 3, 4)
-        self.assertRaises(TypeError, self.func, 1, 2, 3, 4, 5)
-        self.assertRaises(TypeError, self.func, 1, 2, 3, 4, 5, 6, 7)
+    def test_input_arg_string_number(self):
+        # Test rejection of wrong number of arguments
+        self.assert_raises_exception(TypeError,
+                                     [], ["1"]*2, ["1"]*3, ["1"]*4, ["1"]*5, ["1"]*6)
 
-        try:
-            self.func("2023-05-24T22:00:00")
-            self.func(1, 2, 3)
-            self.func(1, 2, 3, 4, 5, 6)
-        except ValueError:
-            # Ignore errors related to arg values
-            pass
-        except TypeError:
-            # Fail on arg type exceptions
-            self.fail()
+        # Test that correct number of arguments are accepted
+        self.assert_not_raises_exception(TypeError,
+                                         ["2023-05-24T22:00:00"],
+                                         ["1"],
+                                         ["a"],
+                                         ignore_exception=ValueError)
 
-    def test_input_correct_number_bad_type(self):
+    def test_input_arg_int_number(self):
+        # Test rejection of wrong number of arguments
+        self.assert_raises_exception(TypeError,
+                                     [], [1], [1]*2, [1]*4, [1]*5, [1]*7)
+
+        # Test that correct number of arguments are accepted
+        self.assert_not_raises_exception(TypeError,
+                                         [1]*3, [1]*6, ignore_exception=ValueError)
+
+    def test_input_one_arg_bad_type(self):
         # One arg, wrong type (must be a string)
-        self.assertRaises(TypeError, self.func, 1)
-        self.assertRaises(TypeError, self.func, object())
-        self.assertRaises(TypeError, self.func, None)
-        self.assertRaises(TypeError, self.func, True)
-        self.assertRaises(TypeError, self.func, [1])
+        self.assert_raises_exception(TypeError,
+                                     [1], [object()], [None], [True], [[1]])
 
-        # Three args, wrong types (must all be numbers)
-        self.assertRaises(TypeError, self.func, '1', object(), None)
-        self.assertRaises(TypeError, self.func, True, (True), [None])
-        self.assertRaises(TypeError, self.func, 1, (True), 3)
+    def test_input_three_args_bad_types(self):
+        # Three args, wrong types (all must be numbers)}
+        self.assert_raises_exception(TypeError,
+                                     [1, object(), None],
+                                     [True, (True), '1'],
+                                     [1.0, True, 3])
 
+    def test_input_six_args_bad_types(self):
         # Six args, wrong types (must all be numbers)
-        self.assertRaises(TypeError, self.func, '1',
-                          object(), None, True, (True), [1])
-        self.assertRaises(TypeError, self.func, 1, 2, 3, 4, 5, [1])
+        self.assert_raises_exception(TypeError,
+                                     ['1', object(), None, True,
+                                      (True), [1]],
+                                     [1, 2, 3, 4, 5, [1]]
+                                     )
 
     def test_input_bad_ISO_values(self):
         # Bad string
@@ -408,15 +395,14 @@ class Test_utc2gps(unittest.TestCase):
         self.assertRaises(ValueError, self.func, "2023-05")
 
     def test_input_good_ISO_values(self):
-        try:
-            # Should not fail if missing time field(s) from ISO string
-            self.func("2023-05-24")
-            self.func("2023-05-24T22")
-            self.func("2023-05-24T23:00")
-            # Should not fail with a good ISO string
-            self.func("2023-05-24T22:00:00")
-        except ValueError:
-            self.fail()
+        # Should not fail if missing minutes or seconds time fields from ISO string
+        self.assert_not_raises_exception(ValueError,
+                                         ["2023-05-24"],
+                                         ["2023-05-24T22"],
+                                         ["2023-05-24T23:00"])
+        # Should not fail with a good, completely filled ISO string
+        self.assert_not_raises_exception(ValueError,
+                                         ["2023-05-24T22:00:00"])
 
     def test_input_values_date_year(self):
         # Bad values
@@ -425,11 +411,10 @@ class Test_utc2gps(unittest.TestCase):
         self.assertRaises(ValueError, self.func,
                           random.randint(-10000, -1), 2, 3, 4, 5, 6)
         # Good values
-        try:
-            self.func(1972, 2, 3, 4, 5, 6)
-            self.func(random.randint(1973, 10000), 2, 3, 4, 5, 6)
-        except ValueError as ex:
-            self.fail()
+        test_vals = []
+        for y in [1972, random.randint(1973, 10000), random.randint(1973, 10000)]:
+            test_vals.append([y, 2, 3, 4, 5, 6])
+        self.assert_not_raises_exception(ValueError, *test_vals)
 
     def test_input_values_date_month(self):
         # Bad values
@@ -437,12 +422,10 @@ class Test_utc2gps(unittest.TestCase):
         self.assertRaises(ValueError, self.func, 1972, 0, 3, 4, 5, 6)
         self.assertRaises(ValueError, self.func, 1972, -1, 3, 4, 5, 6)
         # Good values
-        try:
-            self.func(1972, 1, 3, 4, 5, 6)
-            self.func(1972, 12, 3, 4, 5, 6)
-            self.func(1972, random.randint(2, 11), 3, 4, 5, 6)
-        except ValueError:
-            self.fail()
+        test_vals = []
+        for m in [1, 12, random.randint(2, 11), random.randint(2, 11)]:
+            test_vals.append([1972, m, 3, 4, 5, 6])
+        self.assert_not_raises_exception(ValueError, *test_vals)
 
     def test_input_values_date_day(self):
         # Bad values
@@ -452,49 +435,41 @@ class Test_utc2gps(unittest.TestCase):
         self.assertRaises(ValueError, self.func, 1972, 1,
                           random.randint(-31, -1), 4, 5, 6)
         # Good values
-        try:
-            self.func(1972, 2, 1, 4, 5, 6)
-            self.func(1972, 2, 31, 4, 5, 6)
-            self.func(1972, 2, random.randint(2, 30), 4, 5, 6)
-        except ValueError:
-            self.fail()
+        test_vals = []
+        for d in [1, 31, random.randint(2, 30), random.randint(2, 30)]:
+            test_vals.append([1972, 3, d, 4, 5, 6])
+        self.assert_not_raises_exception(ValueError, *test_vals)
 
     def test_input_values_time_hour(self):
         # Bad values
         self.assertRaises(ValueError, self.func, 1972, 2, 3, -1, 5, 6)
         self.assertRaises(ValueError, self.func, 1972, 2, 3, 24, 5, 6)
         # Good values
-        try:
-            self.func(1972, 2, 3, 0, 5, 6)
-            self.func(1972, 2, 3, 23, 5, 6)
-            self.func(1972, 2, 3, random.randint(2, 22), 5, 6)
-        except ValueError:
-            self.fail()
+        test_vals = []
+        for h in [0, 23, random.randint(1, 22), random.randint(1, 22)]:
+            test_vals.append([1972, 2, 3, h, 5, 6])
+        self.assert_not_raises_exception(ValueError, *test_vals)
 
     def test_input_values_time_minute(self):
         # Bad values
         self.assertRaises(ValueError, self.func, 1972, 2, 3, 4, -1, 6)
         self.assertRaises(ValueError, self.func, 1972, 2, 3, 4, 60, 6)
         # Good values
-        try:
-            self.func(1972, 2, 3, 4, 0, 6)
-            self.func(1972, 2, 3, 4, 59, 6)
-            self.func(1972, 2, 3, 4, random.randint(2, 58), 6)
-        except ValueError:
-            self.fail()
+        test_vals = []
+        for m in [0, 59, random.randint(1, 58), random.randint(1, 58)]:
+            test_vals.append([1972, 2, 3, 4, m, 6])
+        self.assert_not_raises_exception(ValueError, *test_vals)
 
     def test_input_values_time_second(self):
         # Bad values
         self.assertRaises(ValueError, self.func, 1972, 2, 3, 4, 5, -1)
         self.assertRaises(ValueError, self.func, 1972, 2, 3, 4, 5, 60)
         # Good values
-        try:
-            self.func(1972, 2, 3, 4, 5, 0)
-            self.func(1972, 2, 3, 4, 5, 59)
-            self.func(1972, 2, 3, 4, 5, 59 + random.random())
-            self.func(1972, 2, 3, 4, 5, random.randint(2, 58))
-        except ValueError:
-            self.fail()
+        test_vals = []
+        for s in [0, 59, random.randint(1, 58), random.randint(1, 58),
+                  59 + random.random(), 59 + random.random()]:
+            test_vals.append([1972, 2, 3, 4, 5, s])
+        self.assert_not_raises_exception(ValueError, *test_vals)
 
     def test_output_type(self):
         self.assertEqual(type(self.func(2001, 2, 3, 4, 5, 0)), float)
@@ -505,7 +480,8 @@ class Test_utc2gps(unittest.TestCase):
         self.assertAlmostEqual(self.func(1980, 1, 1, 0, 0, 0), -432000.000, 6)
 
 
-class Test_mjd2gps(unittest.TestCase):
+@unittest.skipIf(DEVELOPMENT, "Development")
+class Test_mjd2gps(test_helpers.Test_Helpers):
     def setUp(self):
         self.func = mjd2gps
 
@@ -513,19 +489,12 @@ class Test_mjd2gps(unittest.TestCase):
         self.func = None
 
     def test_input_types(self):
-        self.assertRaises(TypeError, self.func, 0)
-        self.assertRaises(TypeError, self.func, 'a')
-        self.assertRaises(TypeError, self.func, ['a'])
-        self.assertRaises(TypeError, self.func, None)
-        self.assertRaises(TypeError, self.func, object())
-        self.assertRaises(TypeError, self.func, True)
+        self.assert_raises_exception(TypeError,
+                                     [0], ['a'], [['a']], [None], [object()], [True])
 
         # Check the expected types don't fail
-        try:
-            self.func(44250.0)
-            self.func(np.asarray([41319.0, 54321.123]))
-        except TypeError:
-            self.fail()
+        self.assert_not_raises_exception(TypeError,
+                                         [44250.0], [np.asarray([41319.0, 54321.123])])
 
     def test_output_type(self):
         self.assertIsInstance(self.func(44250.0), float)
