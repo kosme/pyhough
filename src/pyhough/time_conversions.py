@@ -40,48 +40,6 @@ def gps2mjd(tgps):
     return mjd
 
 
-# MJD effective dates when TAI-UTC stepped by +1s (from your MATLAB table)
-_LEAP_MJD = np.array([
-    41317, 41499, 41683, 42048, 42413, 42778, 43144, 43509, 43874,
-    44786, 45151, 45516, 46247, 47161, 47892, 48257, 48804, 49169,
-    49534, 50083, 50630, 51179, 53736, 54832, 56109, 57204, 57754
-], dtype=float)
-
-# nls at/after the last entry in the table above (2017-01-01): TAI-UTC = 37 s
-# If new leap seconds occur, you must update both _LEAP_MJD and this value.
-_LEAP_MAX = 37
-
-
-def leap_seconds(mjd):
-    """
-    Number of leap seconds (TAI-UTC in seconds) applicable at a given MJD.
-
-    Parameters
-    ----------
-    mjd : float or array-like
-        Modified Julian Date (days).
-
-    Returns
-    -------
-    nls : float or ndarray
-        TAI-UTC (seconds). Same shape as input.
-    """
-    mjd = np.asarray(mjd, dtype=float)
-
-    # Count how many leap dates are strictly less than mjd
-    # (MATLAB code uses: if mjd > leaptimes(i) then break)
-    n_before = np.searchsorted(_LEAP_MJD, mjd, side="right")
-
-    # At mjd beyond the last leap date, n_before == len(_LEAP_MJD) -> returns _LEAP_MAX
-    # At earlier mjd, subtract how many steps haven't happened yet.
-    nls = _LEAP_MAX - (len(_LEAP_MJD) - n_before)
-
-    # Return scalar if scalar input
-    if nls.shape == ():
-        return float(nls)
-    return nls
-
-
 def tdt2tdb(mjd):
     """
     Seconds to add to tdt (terrestrial dymamical time (TAI corrected)) 
