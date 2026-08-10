@@ -1,5 +1,9 @@
 import numpy as np
 
+from datetime import datetime, timezone
+
+GPS_EPOCH = datetime(1980, 1, 6, tzinfo=timezone.utc)
+
 def gps2mjd(tgps):
     """
     Convert GPS time (seconds) to Modified Julian Date (days).
@@ -141,14 +145,6 @@ def gmst(t):
     return np.mod(st, 24.0)
 
 # print(gmst(6.008867471064815e+04))
-
-from datetime import datetime, timezone
-
-GPS_EPOCH = datetime(1980, 1, 6, tzinfo=timezone.utc)
-
-
-import numpy as np
-
 
 def mjuliandate(*args):
     """
@@ -307,10 +303,6 @@ def mjd2gps(mjd):
     t0 = 44244.0
 
     return (mjd - t0) * 86400.0 + (leap_seconds(mjd) - 19.0)
-
-
-import numpy as np
-
 
 def leap_seconds(mjd):
     """
