@@ -4,9 +4,10 @@ from datetime import datetime, timezone
 
 GPS_EPOCH = datetime(1980, 1, 6, tzinfo=timezone.utc)
 SECONDS_IN_DAY = 86400.0
-MJD_AT_GPS_EPOCH = 44244.0 # 6-Jan-1980 00:00:00
+MJD_AT_GPS_EPOCH = 44244.0  # 6-Jan-1980 00:00:00
 TAI_UTC_AT_GPS_EPOCH = 19.0
 BASE_TAI_UTC = 10
+
 
 def gps2mjd(tgps):
     """
@@ -22,7 +23,7 @@ def gps2mjd(tgps):
     mjd : ndarray
         Modified Julian Date (days).
     """
-    
+
     # Reject wrong input types
     if not isinstance(tgps, (float, list, tuple, np.ndarray)):
         raise TypeError
@@ -33,7 +34,7 @@ def gps2mjd(tgps):
 
     # Leap second correction (GPS linked to TAI, offset from UTC)
     mjd = mjd - (leap_seconds(mjd) - TAI_UTC_AT_GPS_EPOCH) / SECONDS_IN_DAY
-    
+
     # Ensure output type consistency
     if not isinstance(mjd, np.ndarray):
         return np.asarray(mjd)
@@ -45,7 +46,7 @@ def tdt2tdb(mjd):
     """
     Seconds to add to tdt (terrestrial dymamical time (TAI corrected)) 
     to have tdb (barycentric dynamical time)
-    
+
     Parameters
     ----------
     mjd : int, float, or np.ndarray
@@ -60,9 +61,10 @@ def tdt2tdb(mjd):
         raise TypeError
 
     JD = mjd + 2400000.5
-    g = np.mod(357.53 + 0.98560028 * (JD - 2451545.0),360) * np.pi/180
+    g = np.deg2rad(np.mod(357.53 + 0.98560028 * (JD - 2451545.0), 360))
     tdb = 0.001658 * np.sin(g) + 0.000014 * np.sin(2*g)
     return tdb
+
 
 def gmst(t):
     """
@@ -91,9 +93,9 @@ def gmst(t):
     jd0 = np.floor(jd - 0.5) + 0.5
     h = (jd - jd0) * 24.0
 
-    d  = jd  - 2451545.0
+    d = jd - 2451545.0
     d0 = jd0 - 2451545.0
-    T  = d / 36525.0
+    T = d / 36525.0
 
     st = (
         6.697374558
@@ -104,7 +106,6 @@ def gmst(t):
 
     return np.mod(st, 24.0)
 
-# print(gmst(6.008867471064815e+04))
 
 def mjuliandate(*args):
     """
@@ -153,7 +154,8 @@ def mjuliandate(*args):
         )
 
     else:
-        raise TypeError("Use mjuliandate(Y,M,D), mjuliandate(Y,M,D,h,m,s), or an Nx3/Nx6 array.")
+        raise TypeError(
+            "Use mjuliandate(Y,M,D), mjuliandate(Y,M,D,h,m,s), or an Nx3/Nx6 array.")
 
     year = year.astype(int).copy()
     month = month.astype(int).copy()
@@ -166,7 +168,8 @@ def mjuliandate(*args):
     days_in_month = np.array([31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31])
 
     if np.any(year < 1):
-        raise ValueError("This function is intended for CE Gregorian dates only.")
+        raise ValueError(
+            "This function is intended for CE Gregorian dates only.")
     if np.any(month < 1) or np.any(month > 12):
         raise ValueError("Invalid month value")
     if np.any(day < 1):
@@ -217,7 +220,7 @@ def utc2gps(*args):
         utc2gps(year, month, day, hour, minute, second)
     """
 
-    if len(args) == 1: 
+    if len(args) == 1:
         if isinstance(args[0], str):
             dt = datetime.fromisoformat(args[0])
 
@@ -232,7 +235,7 @@ def utc2gps(*args):
                 )
             )
         else:
-            raise TypeError("utc2gps expects either an ISO string")
+            raise TypeError("utc2gps expects an ISO string")
 
     if len(args) == 3:
         year, month, day = args
@@ -256,6 +259,7 @@ def utc2gps(*args):
         mjuliandate(year, month, day, hour, minute, second)
     )
 
+
 def mjd2gps(mjd):
     """
     Convert Modified Julian Date to GPS seconds.
@@ -271,6 +275,7 @@ def mjd2gps(mjd):
 
     return (mjd - MJD_AT_GPS_EPOCH) * SECONDS_IN_DAY + (leap_seconds(mjd) - TAI_UTC_AT_GPS_EPOCH)
 
+
 def leap_seconds(mjd):
     """
     Return TAI-UTC leap seconds at the given Modified Julian Date.
@@ -281,11 +286,11 @@ def leap_seconds(mjd):
 
     Returns
     -------
-    int, float, or ndarray
+    float or ndarray
         TAI-UTC in seconds.
     """
 
-    if not isinstance(mjd,(float, list, tuple, np.ndarray)):
+    if not isinstance(mjd, (float, list, tuple, np.ndarray)):
         raise TypeError
 
     leaptimes = np.array([
@@ -319,14 +324,16 @@ def leap_seconds(mjd):
         57754,  # 2017 Jan 1,  TAI-UTC = 37
     ], dtype=float)
 
-    tai_minus_utc_values = np.arange(BASE_TAI_UTC, BASE_TAI_UTC + len(leaptimes), dtype=float)
+    tai_minus_utc_values = np.arange(
+        BASE_TAI_UTC, BASE_TAI_UTC + len(leaptimes), dtype=float)
 
     mjd_arr = np.asarray(mjd, dtype=float)
 
     indices = np.searchsorted(leaptimes, mjd_arr, side="right") - 1
 
     if np.any(indices < 0):
-        raise ValueError("MJD is before 1972-01-01; leap-second table not defined.")
+        raise ValueError(
+            "MJD is before 1972-01-01; leap-second table not defined.")
 
     nls = tai_minus_utc_values[indices]
 
