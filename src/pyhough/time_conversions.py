@@ -154,11 +154,11 @@ def mjuliandate(*args):
     else:
         raise TypeError("Use mjuliandate(Y,M,D), mjuliandate(Y,M,D,h,m,s), or an Nx3/Nx6 array.")
 
-    year = year.astype(float).copy()
-    month = month.astype(float).copy()
-    day = day.astype(float).copy()
-    hour = hour.astype(float)
-    minute = minute.astype(float)
+    year = year.astype(int).copy()
+    month = month.astype(int).copy()
+    day = day.astype(int).copy()
+    hour = hour.astype(int)
+    minute = minute.astype(int)
     second = second.astype(float)
 
     if np.any(year < 1):
@@ -175,8 +175,8 @@ def mjuliandate(*args):
         raise ValueError("Invalid second value")
 
     jan_feb = month <= 2
-    year[jan_feb] -= 1.0
-    month[jan_feb] += 12.0
+    year[jan_feb] -= 1
+    month[jan_feb] += 12
 
     day_fraction = (hour + minute / 60.0 + second / 3600.0) / 24.0
 
