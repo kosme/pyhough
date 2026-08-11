@@ -276,6 +276,7 @@ class Test_mjuliandate(test_helpers.Test_Helpers):
         for y in [1, random.randint(2, 10000), random.randint(2, 10000)]:
             test_vals.append([y, 2, 3, 4, 5, 6])
         self.assert_not_raises_exception(ValueError, *test_vals)
+        self.assert_not_raises_exception(ValueError, [test_vals])
 
     def test_input_values_date_month(self):
         # Bad values
@@ -287,6 +288,7 @@ class Test_mjuliandate(test_helpers.Test_Helpers):
         for m in [1, 12, random.randint(2, 11), random.randint(2, 11)]:
             test_vals.append([1, m, 3, 4, 5, 6])
         self.assert_not_raises_exception(ValueError, *test_vals)
+        self.assert_not_raises_exception(ValueError, [test_vals])
 
     def test_input_values_date_day(self):
         # Bad values
@@ -300,6 +302,7 @@ class Test_mjuliandate(test_helpers.Test_Helpers):
         for d in [1, 31, random.randint(2, 30), random.randint(2, 30)]:
             test_vals.append([1, 3, d, 4, 5, 6])
         self.assert_not_raises_exception(ValueError, *test_vals)
+        self.assert_not_raises_exception(ValueError, [test_vals])
 
     def test_input_values_time_hour(self):
         # Bad values
@@ -310,6 +313,7 @@ class Test_mjuliandate(test_helpers.Test_Helpers):
         for h in [0, 23, random.randint(1, 22), random.randint(1, 22)]:
             test_vals.append([1, 2, 3, h, 5, 6])
         self.assert_not_raises_exception(ValueError, *test_vals)
+        self.assert_not_raises_exception(ValueError, [test_vals])
 
     def test_input_values_time_minute(self):
         # Bad values
@@ -320,6 +324,7 @@ class Test_mjuliandate(test_helpers.Test_Helpers):
         for m in [0, 59, random.randint(1, 58), random.randint(1, 58)]:
             test_vals.append([1, 2, 3, 4, m, 6])
         self.assert_not_raises_exception(ValueError, *test_vals)
+        self.assert_not_raises_exception(ValueError, [test_vals])
 
     def test_input_values_time_second(self):
         # Bad values
@@ -331,6 +336,7 @@ class Test_mjuliandate(test_helpers.Test_Helpers):
                   59 + random.random(), 59 + random.random()]:
             test_vals.append([1, 2, 3, 4, 5, s])
         self.assert_not_raises_exception(ValueError, *test_vals)
+        self.assert_not_raises_exception(ValueError, [test_vals])
 
     def test_output_values(self):
         self.assertAlmostEqual(self.func(2001, 2, 3, 4, 5, 0), 51943.17013889)
