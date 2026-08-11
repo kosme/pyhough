@@ -141,14 +141,15 @@ def mjuliandate(*args):
             raise ValueError("Single-array input must have shape Nx3 or Nx6.")
 
     elif len(args) == 3:
-        year, month, day = np.broadcast_arrays(*[np.asarray(a, dtype=float) for a in args])
+        year, month, day = np.broadcast_arrays(
+            *[np.asarray([a], dtype=float) for a in args])
         hour = np.zeros_like(year)
         minute = np.zeros_like(year)
         second = np.zeros_like(year)
 
     elif len(args) == 6:
         year, month, day, hour, minute, second = np.broadcast_arrays(
-            *[np.asarray(a, dtype=float) for a in args]
+            *[np.asarray([a], dtype=float) for a in args]
         )
 
     else:
@@ -161,11 +162,19 @@ def mjuliandate(*args):
     minute = minute.astype(int)
     second = second.astype(float)
 
+    leap_year = (year % 4 == 0) & ((year % 100 != 0) | (year % 400 == 0))
+    days_in_month = np.array([31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31])
+
     if np.any(year < 1):
         raise ValueError("This function is intended for CE Gregorian dates only.")
     if np.any(month < 1) or np.any(month > 12):
         raise ValueError("Invalid month value")
-    if np.any(day < 1) or np.any(day > 31):
+    if np.any(day < 1):
+        raise ValueError("Invalid day value")
+    # Validate specific day number for each month/year combination
+    max_day = days_in_month[month - 1]
+    max_day[(month == 2) & leap_year] = 29
+    if np.any(day > max_day):
         raise ValueError("Invalid day value")
     if np.any(hour < 0) or np.any(hour > 23):
         raise ValueError("Invalid hour value")

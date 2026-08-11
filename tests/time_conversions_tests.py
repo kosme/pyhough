@@ -297,10 +297,18 @@ class Test_mjuliandate(test_helpers.Test_Helpers):
         self.assertRaises(ValueError, self.func, 1, 1, 0, 4, 5, 6)
         self.assertRaises(ValueError, self.func, 1, 1,
                           random.randint(-31, -1), 4, 5, 6)
+        # Not a leap year
+        self.assertRaises(ValueError, self.func, 5, 2, 29, 4, 5, 6)
+        # November has only 30 days
+        self.assertRaises(ValueError, self.func, 1, 11, 31, 4, 5, 6)
         # Good values
         test_vals = []
         for d in [1, 31, random.randint(2, 30), random.randint(2, 30)]:
             test_vals.append([1, 3, d, 4, 5, 6])
+        # Check leap year validation
+        test_vals.append([4, 2, 29, 1, 1, 1])
+        # November has only 30 days
+        test_vals.append([1, 11, 30, 4, 5, 6])
         self.assert_not_raises_exception(ValueError, *test_vals)
         self.assert_not_raises_exception(ValueError, [test_vals])
 
