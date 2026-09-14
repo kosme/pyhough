@@ -2,16 +2,20 @@ import unittest
 
 
 class Test_Helpers(unittest.TestCase):
-    # Iterate over a series of argument cases and assert that they raise the expected Exception
     def assert_raises_exception(self, expected_exception, *args):
+        """
+        Iterate over a series of argument cases and assert that they raise the expected Exception
+        """
         assert not expected_exception is None and issubclass(
             expected_exception, Exception), "exception must have an Exception type"
         for arg in args:
             self.assertRaises(expected_exception, self.func, *arg)
 
-    # Iterate over a series of argument cases and assert that no Exception of the expected type is raised.
-    # Other (optional) kinds of Exceptions can be ignored if required.
     def assert_not_raises_exception(self, expected_exception, *args, ignore_exception=None):
+        """
+        Iterate over a series of argument cases (lists of arguments) and assert that no Exception of the expected type is raised.
+        Other (optional) kinds of Exceptions can be ignored if required.
+        """
         assert not expected_exception is None and issubclass(
             expected_exception, Exception), "exception must have an Exception type"
         assert not expected_exception is ignore_exception, "exception cannot be ignored"
@@ -29,3 +33,35 @@ class Test_Helpers(unittest.TestCase):
                 pass
             except expected_exception:
                 self.fail()
+
+    def assert_raises_exception_over_arg_size_range(self, expected_exception, sample_arg, *args):
+        """
+        Iterate over a value range, generating variable length inputs, and asserting an exception is raised
+        """
+        if len(args) == 1:
+            minVal = 0
+            maxVal = args[0]
+        elif len(args) == 2:
+            minVal = args[0]
+            maxVal = args[1]
+        else:
+            raise ValueError(
+                "One or two arguments must be provided for the range")
+
+        if minVal < 0:
+            raise ValueError(
+                "Start value for the range must be equal or greater than 0.")
+        if not maxVal > minVal:
+            raise ValueError(f"Maximum value must be greater than {minVal}.")
+        if not type(minVal) == int:
+            raise TypeError("Minimum value for the range must be an integer.")
+        if not type(maxVal) == int:
+            raise TypeError("Maximum value for the range must be an integer.")
+
+        # Initialize to the starting length
+        generated_args = [sample_arg]*minVal
+
+        for x in range(minVal, maxVal, 1):
+            self.assertRaises(expected_exception, self.func, *generated_args)
+            generated_args.append(sample_arg)
+        self.assertRaises(expected_exception, self.func, *generated_args)
