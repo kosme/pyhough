@@ -229,7 +229,7 @@ def parse_args():
 
 
 
-def run_tcw_injection(args, inj_provider=None):
+def run_tcw_injection(args, inj_provider=None,sour_to_het=None):
     np.random.seed(args.seed)
 
     sfdb_dir = args.sfdb_dir.expanduser().resolve()
@@ -400,7 +400,7 @@ def run_tcw_injection(args, inj_provider=None):
                 #     sft,sps = FFTing.sub_whitenoise(lfft,sfdb_head)
 
 
-                times,freqs,FFTs, SPSs, tf_map = FFTing.change_FFT_length(sft,sfdb_head,new_tfft,minf,maxf,inj,fft_index,downsamp,band,white_noise)
+                times,freqs,FFTs, SPSs, tf_map = FFTing.change_FFT_length(sft,sfdb_head,new_tfft,minf,maxf,inj,fft_index,downsamp,band,white_noise,sour_to_het=sour_to_het)
                 if band or downsamp:
                     freqs = freqs + minf
                 if fft_index == 0:
@@ -627,9 +627,37 @@ def run_tcw_injection(args, inj_provider=None):
 
 # run_tcw_injection(args, inj_provider=my_provider)
 
+# -----------------------------------------------------------------------------
+# 6. Inject one source, heterodyne with another:
+# -----------------------------------------------------------------------------
+
+args = parse_args()
+
+inj_provider = provider_injections.provider_power_law(
+    f0=800,
+    h0=2.4865e-23,
+    mc=4e-4,
+    n=11/3,
+)
+
+sour_to_het = provider_injections.provider_power_law(
+    f0=800,
+    h0=0.0,
+    mc=4e-4,
+    n=11/3,
+)
+
+run_tcw_injection(
+    args,
+    inj_provider=inj_provider,
+    sour_to_het=sour_to_het,
+)
 
 # =============================================================================
 # =============================================================================
+
+
+
 
 def main():
     args = parse_args()

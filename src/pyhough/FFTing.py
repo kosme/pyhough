@@ -5,6 +5,56 @@ import matplotlib.pyplot as plt
 from pyhough import inject
 from pyhough import time_conversions
 
+def heterodyne_from_sft(
+    sft,
+    sour_to_het,
+    dtori,
+    mjd,
+    lfftori,
+    gps0,
+    new_gps_sec,
+    num_orig_FFT=0,
+    tfft_orig=0.0,
+):
+    """
+    Heterodyne an SFT using a source/provider describing the signal
+    to be removed.
+
+    Parameters
+    ----------
+    sour_to_het : Injection or provider
+        Source model used to compute the heterodyne phase evolution.
+    """
+
+    tt = (
+        dtori * np.arange(lfftori)
+        + (new_gps_sec - gps0)
+        + num_orig_FFT * tfft_orig / 2
+        + time_conversions.tdt2tdb(mjd)
+    )
+
+    if hasattr(sour_to_het, "ctx"):
+        # Injection object
+        _, fsss = sour_to_het(tt, num_orig_FFT)
+        provider = sour_to_het.provider
+    else:
+        # Bare provider
+        _, fsss = sour_to_het(tt, num_orig_FFT, None)
+        provider = sour_to_het
+
+    provider_params = getattr(provider, "params", {})
+    f0_ref = provider_params.get("f0", fsss[0])
+
+    # MATLAB:
+    # ph1=mod(cumsum(fsss-simsour.f0).*[0 diff(tt)],1)*2*pi;
+
+    dt_step = np.concatenate(([0.0], np.diff(tt)))
+    phase = np.mod(np.cumsum((fsss - f0_ref) * dt_step), 1.0) * 2 * np.pi
+
+    correction = np.exp(-1j * phase)
+
+    return np.fft.fft(np.fft.ifft(sft) * correction)
+
 def pswindow(typ, length, par=None):
     """
     Computes windows for power spectrum estimates.
@@ -97,7 +147,7 @@ def get_original_strains(sft):
     
     return strains
 
-def change_FFT_length(sft,sfdb_head,TFFT,minf,maxf,inj_provider=None,num_orig_FFT=0,downsamp=False,band=False,white_noise=False,win=3):
+def change_FFT_length(sft,sfdb_head,TFFT,minf,maxf,inj_provider=None,num_orig_FFT=0,downsamp=False,band=False,white_noise=False,win=3,sour_to_het=None):
     
     strains =  get_original_strains(sft)
     
@@ -226,6 +276,19 @@ def change_FFT_length(sft,sfdb_head,TFFT,minf,maxf,inj_provider=None,num_orig_FF
                 full_sft = full_sft[k1:k2]
                 full_sps = full_sps[k1:k2]
             
+        if sour_to_het is not None:
+            full_sft = heterodyne_from_sft(
+                full_sft,
+                sour_to_het=sour_to_het,
+                dtori=dtnew,
+                mjd=mjd_time,
+                lfftori=len(full_sft),
+                gps0=gps0,
+                new_gps_sec=new_gps_sec,
+                num_orig_FFT=num_orig_FFT,
+                tfft_orig=tfft_orig,
+            )
+                
         all_FFTs[jj, :] = full_sft
         all_SPSs[jj, :] = full_sps
         if white_noise:
