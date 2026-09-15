@@ -511,118 +511,212 @@ def get_hough_axis_labels(n):
 
     return xlabel, ylabel
 
+import numpy as np
+
+
 def vary_p0_hfdf_compute_mu_sigma_nonuni_grids(
     gridx,
     gridk,
     n,
     TFFT,
-    fmin,
-    fmax,
-    tim,
+    basic_info,
     epoch,
     p0_sft,
 ):
     """
-    Compute MU(x,k) and ST(x,k)=sqrt(VAR) for GFH on nonuniform x/k grids,
-    with per-SFT peak probability p0_sft (no weights argument needed).
+    MU(x,k), SIGMA(x,k) for GFH with per-SFT p0.
 
     Parameters
     ----------
-    gridx : array_like, shape (Nx,) or (Nx,1)
-        Nonuniform x grid centers (must be strictly increasing).
-    gridk : array_like, shape (Nk,) or (Nk,1)
-        k grid values.
+    gridx : array-like, shape (Nx,)
+        Non-uniform x grid used in the Hough map.
+
+    gridk : array-like, shape (Nk,)
+        k grid used in the Hough map.
+
     n : float
-        Braking index; x = f^(-(n-1)).
+        Braking index, with x = f^{-(n-1)}.
+
     TFFT : float
-        Coherence time in seconds; df = 1/TFFT.
-    fmin, fmax : float
-        Frequency band in Hz. (Uses MATLAB-style inclusive fmin:df:fmax behavior.)
-    tim : array_like, shape (Nt,)
-        SFT times in days (e.g. MJD).
+        FFT duration in seconds. df = 1/TFFT.
+
+    basic_info : object or dict
+        Must contain:
+            tim       : SFT times in MJD
+            freq_band : [fmin, fmax] in Hz
+
     epoch : float
-        Reference time in days (MJD).
-    p0_sft : array_like, shape (Nt,) or scalar
-        Per-SFT peak probability. If scalar, it is broadcast to Nt.
+        Hough reference epoch in MJD.
+
+    p0_sft : float or array-like, shape (Nt,)
+        Per-SFT peak-selection probability.
 
     Returns
     -------
     MU : ndarray, shape (Nx, Nk)
-        Expected mean Hough counts per (x,k).
+        Expected Hough number count.
+
     ST : ndarray, shape (Nx, Nk)
-        Standard deviation per (x,k), computed as sqrt(sum p0*(1-p0)).
+        Standard deviation of Hough number count.
     """
-    # unpack / basics
-    tsec = 86400.0 * (np.asarray(tim).reshape(-1) - float(epoch))  # (Nt,)
-    df = 1.0 / float(TFFT)
-    pow_ = float(n) - 1.0
 
-    # shape checks
-    gridx = np.asarray(gridx).reshape(-1)
-    gridk = np.asarray(gridk).reshape(-1)
-    p0_sft = np.asarray(p0_sft).reshape(-1)
+    # ---------------------------------------------------------
+    # Unpack inputs
+    # ---------------------------------------------------------
 
-    Nx = gridx.size
-    Nk = gridk.size
-    Nt = tsec.size
+    if isinstance(basic_info, dict):
+        times = np.asarray(basic_info["tim"], dtype=float).reshape(-1)
+        fmin, fmax = basic_info["freq_band"]
+    else:
+        times = np.asarray(basic_info.tim, dtype=float).reshape(-1)
+        fmin, fmax = basic_info.freq_band
 
-    if p0_sft.size == 1:
-        p0_sft = np.full(Nt, float(p0_sft[0]))
-    if p0_sft.size != Nt:
-        raise ValueError("p0_sft must be Nt×1 (per SFT) or a scalar.")
+    tsec = 86400.0 * (times - epoch)
+
+    df = 1.0 / TFFT
+    pow_val = n - 1.0
+
+    # ---------------------------------------------------------
+    # Shape handling
+    # ---------------------------------------------------------
+
+    gridx = np.asarray(gridx, dtype=float).reshape(-1)
+    gridk = np.asarray(gridk, dtype=float).reshape(-1)
+    p0_sft = np.asarray(p0_sft, dtype=float).reshape(-1)
+
+    Nx = len(gridx)
+    Nk = len(gridk)
+    Nt = len(tsec)
+
+    if len(p0_sft) == 1:
+        p0_sft = np.full(Nt, p0_sft[0], dtype=float)
+
+    if len(p0_sft) != Nt:
+        raise ValueError("p0_sft must have length Nt (one value per SFT).")
+
     if Nx < 2:
         raise ValueError("gridx must have at least 2 elements.")
 
-    # x-bin edges (Nx+1), centered about gridx (works for nonuniform grid)
-    xedges = np.empty(Nx + 1, dtype=float)
-    xedges[0] = gridx[0] - 0.5 * (gridx[1] - gridx[0])
-    xedges[1:-1] = 0.5 * (gridx[:-1] + gridx[1:])
-    xedges[-1] = gridx[-1] + 0.5 * (gridx[-1] - gridx[-2])
+    # ---------------------------------------------------------
+    # Frequency grid
+    #
+    # MATLAB:
+    #
+    #     fmin:df:fmax
+    #
+    # Reproduce the inclusive MATLAB-colon behavior.
+    # ---------------------------------------------------------
 
-    if not np.all(np.diff(xedges) > 0):
-        raise ValueError("xedges must be strictly increasing.")
+    Nf = int(np.floor((fmax - fmin) / df + 1.0 + 1e-12))
 
-    # outputs
+    f_sample = fmin + df * np.arange(Nf, dtype=float)
+
+    # x-bin boundaries -- identical construction to the Hough
+    xedges = np.flip(
+        1.0 / f_sample**pow_val
+    )
+
+    # ---------------------------------------------------------
+    # Output arrays
+    # ---------------------------------------------------------
+
     MU = np.zeros((Nx, Nk), dtype=float)
     VAR = np.zeros((Nx, Nk), dtype=float)
 
-    # frequency grid (match Hough) -- MATLAB fmin:df:fmax inclusive
-    # Avoid float-step drift by computing count explicitly.
-    Nf = int(np.floor((fmax - fmin) / df + 1.0 + 1e-12))
-    f_sample = fmin + df * np.arange(Nf, dtype=float)  # (Nf,)
-    x_sample = f_sample ** (-pow_)  # (Nf,)
+    # Frequency -> x
+    x_sample = f_sample ** (-pow_val)
 
-    # expand per-SFT p0 across all freq bins → (Nt*Nf,)
-    p0_vec = np.repeat(p0_sft, Nf)
+    # ---------------------------------------------------------
+    # Per-SFT probabilities repeated over frequency
+    #
+    # MATLAB:
+    #
+    #     p0_vec = repmat(p0_sft, Nf, 1);
+    #
+    # Because x0_grid(:) uses MATLAB column-major ordering,
+    # this must be:
+    #
+    #     [all times at f1,
+    #      all times at f2,
+    #      ...]
+    # ---------------------------------------------------------
+
+    p0_vec = np.tile(p0_sft, Nf)
+
     q0_vec = p0_vec * (1.0 - p0_vec)
 
-    # helper: discretize-like binning (MATLAB convention: left-open, right-closed),
-    # returning 1..Nx, or 0 for out-of-range (we'll treat 0 as invalid).
-    # Using np.searchsorted with side="left" implements right-closed behavior:
-    # idx = searchsorted(edges, x, 'left') gives i such that edges[i-1] < x <= edges[i]
-    def _discretize_right_closed(x, edges):
-        idx = np.searchsorted(edges, x, side="left")  # 0..Nx+1
-        # valid bins are 1..Nx
-        valid = (idx >= 1) & (idx <= Nx)
-        return idx, valid
+    # ---------------------------------------------------------
+    # Match MATLAB sign convention for chirps
+    # ---------------------------------------------------------
 
-    # main loop over k (vectorized over t and f)
+    if n not in (3, 5, 7):
+        gridk = -gridk
+
+    # ---------------------------------------------------------
+    # Loop over k
+    # ---------------------------------------------------------
+
     for ik, k in enumerate(gridk):
-        # map (t,f) → x0: x0 = f^(-pow) - pow*k*t
-        # shape: (Nt, Nf)
-        x0_grid = x_sample[None, :] - pow_ * float(k) * tsec[:, None]
-        x0_vec = x0_grid.ravel()
 
-        bin_idx, valid = _discretize_right_closed(x0_vec, xedges)
+        # MATLAB:
+        #
+        # x0_grid = x_sample.' - pow*k.*tsec
+        #
+        # Gives Nt x Nf
+        x0_grid = (
+            x_sample[np.newaxis, :]
+            - pow_val * k * tsec[:, np.newaxis]
+        )
 
-        # accumarray equivalent with bincount; convert 1..Nx -> 0..Nx-1
-        b = bin_idx[valid] - 1
-        MU[:, ik] = np.bincount(b, weights=p0_vec[valid], minlength=Nx)
-        VAR[:, ik] = np.bincount(b, weights=q0_vec[valid], minlength=Nx)
+        # MATLAB x0_grid(:) is COLUMN-MAJOR.
+        x0_vec = x0_grid.ravel(order="F")
+
+        # -----------------------------------------------------
+        # MATLAB discretize(x0_vec, xedges)
+        #
+        # Bins are:
+        #
+        #   xedges[i] <= x < xedges[i+1]
+        #
+        # np.searchsorted(..., side="right") - 1 gives
+        # zero-based bin indices with the same convention.
+        # -----------------------------------------------------
+
+        bin_idx = (
+            np.searchsorted(
+                xedges,
+                x0_vec,
+                side="right",
+            )
+            - 1
+        )
+
+        # Valid Hough bins are 0 ... Nx-1.
+        #
+        # Critically, MATLAB code explicitly excludes:
+        #
+        #     x0_vec == xedges(end)
+        #
+        # so require x0 < uppermost x edge.
+        valid = (
+            (bin_idx >= 0)
+            & (bin_idx < Nx)
+            & (x0_vec < xedges[-1])
+        )
+
+        # MATLAB accumarray()
+        MU[:, ik] = np.bincount(
+            bin_idx[valid],
+            weights=p0_vec[valid],
+            minlength=Nx,
+        )[:Nx]
+
+        VAR[:, ik] = np.bincount(
+            bin_idx[valid],
+            weights=q0_vec[valid],
+            minlength=Nx,
+        )[:Nx]
 
     ST = np.sqrt(VAR)
+
     return MU, ST
-
-
-
-
