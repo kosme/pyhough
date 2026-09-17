@@ -1,4 +1,10 @@
 import numpy as np
+from dataclasses import dataclass
+
+
+@dataclass(frozen=True)
+class Constants:
+    constants: dict
 
 
 def constants():
@@ -60,7 +66,7 @@ def constants():
         'units': units
     }
 
-    return consts
+    return Constants(consts).constants
 
 # Example usage:
 # constants_data = constants()
