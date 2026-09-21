@@ -18,7 +18,7 @@ class Test_Helpers(unittest.TestCase):
         """
         assert not expected_exception is None and issubclass(
             expected_exception, Exception), "exception must have an Exception type"
-        assert not expected_exception is ignore_exception, "exception cannot be ignored"
+        assert not expected_exception is ignore_exception, "expected_exception cannot be ignored"
         if ignore_exception is None:
             try:
                 for arg in args:
@@ -41,27 +41,37 @@ class Test_Helpers(unittest.TestCase):
         if len(args) == 1:
             minVal = 0
             maxVal = args[0]
+            step = 1
         elif len(args) == 2:
             minVal = args[0]
             maxVal = args[1]
+            step = 1
+        elif len(args) == 3:
+            minVal = args[0]
+            maxVal = args[1]
+            step = args[2]
         else:
             raise ValueError(
-                "One or two arguments must be provided for the range")
+                "One, two, or three arguments must be provided for the range.\n(endVal), (minVal, endVal), or (minVal, endVal, step)")
 
         if minVal < 0:
             raise ValueError(
                 "Start value for the range must be equal or greater than 0.")
-        if not maxVal > minVal:
-            raise ValueError(f"Maximum value must be greater than {minVal}.")
         if not type(minVal) == int:
             raise TypeError("Minimum value for the range must be an integer.")
         if not type(maxVal) == int:
             raise TypeError("Maximum value for the range must be an integer.")
+        if not type(step) == int:
+            raise TypeError("Stepping value for the range must be an integer.")
+        if not maxVal > minVal:
+            raise ValueError(f"Maximum value must be greater than {minVal}.")
+        if not step > 0:
+            raise ValueError("Step value must be greater than zero.")
 
         # Initialize to the starting length
         generated_args = [sample_arg]*minVal
 
-        for x in range(minVal, maxVal, 1):
+        for x in range(minVal, maxVal, step):
             self.assertRaises(expected_exception, self.func, *generated_args)
-            generated_args.append(sample_arg)
+            generated_args = generated_args + [sample_arg]*step
         self.assertRaises(expected_exception, self.func, *generated_args)
