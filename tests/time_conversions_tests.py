@@ -4,10 +4,7 @@ import unittest
 import test_helpers
 import random
 
-DEVELOPMENT = False
 
-
-@unittest.skipIf(DEVELOPMENT, "Development")
 class Test_gps2mjd(unittest.TestCase):
     def setUp(self):
         self.func = gps2mjd
@@ -50,7 +47,6 @@ class Test_gps2mjd(unittest.TestCase):
         self.assertAlmostEqual(self.func(1467521334.0), 61229.20041667)
 
 
-@unittest.skipIf(DEVELOPMENT, "Development")
 class Test_leapseconds(unittest.TestCase):
     MIN_VALUE = 41317.0
     MAX_VALUE = 57754.0
@@ -124,7 +120,6 @@ class Test_leapseconds(unittest.TestCase):
         self.assertEqual(self.func(randVal), 37.0)
 
 
-@unittest.skipIf(DEVELOPMENT, "Development")
 class Test_tdt2tdb(unittest.TestCase):
     def setUp(self):
         self.func = tdt2tdb
@@ -169,7 +164,6 @@ class Test_tdt2tdb(unittest.TestCase):
         self.assertAlmostEqual(self.func(-10.0), -0.001365, 6)
 
 
-@unittest.skipIf(DEVELOPMENT, "Development")
 class Test_gmst(unittest.TestCase):
     def setUp(self):
         self.func = gmst
@@ -230,7 +224,6 @@ class Test_gmst(unittest.TestCase):
             self.fail()
 
 
-@unittest.skipIf(DEVELOPMENT, "Development")
 class Test_mjuliandate(test_helpers.Test_Helpers):
     def setUp(self):
         self.func = mjuliandate
@@ -351,7 +344,6 @@ class Test_mjuliandate(test_helpers.Test_Helpers):
         self.assertAlmostEqual(self.func(1980, 1, 1, 0, 0, 0), 44239.00000000)
 
 
-@unittest.skipIf(DEVELOPMENT, "Development")
 class Test_utc2gps(test_helpers.Test_Helpers):
     def setUp(self):
         self.func = utc2gps
@@ -494,7 +486,6 @@ class Test_utc2gps(test_helpers.Test_Helpers):
         self.assertAlmostEqual(self.func(1980, 1, 1, 0, 0, 0), -432000.000, 6)
 
 
-@unittest.skipIf(DEVELOPMENT, "Development")
 class Test_mjd2gps(test_helpers.Test_Helpers):
     def setUp(self):
         self.func = mjd2gps
