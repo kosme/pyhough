@@ -347,7 +347,11 @@ def run_tcw_injection(args, inj_provider=None,sour_to_het=None):
     if has_mc and has_n :
 
         fdotmin = physics.calc_fdot_chirp(mc,minf) # calculate minimum fdot
+        # if fdotmax is an ndarray, new_tfft will be computed as an ndarray. 
+        # That will cause a crash in FFTing.change_FFT_length and later when 
+        # computing Nfs
         fdotmax = physics.calc_fdot_chirp(mc,maxf) # calculate maximum fdot
+        # If this (t1 or t2) is a ndarray, time_in_science will crash. 
         t1 = physics.calc_time_to_coalescence(mc,minf) # time left to coalescence at minf
         t2 = physics.calc_time_to_coalescence(mc,maxf) # time left to coalescence at maxf
 
@@ -482,7 +486,8 @@ def run_tcw_injection(args, inj_provider=None,sour_to_het=None):
 
         ### Estimate empirically the number of peaks on average to fall into each bin in Hough map, and standard deviation
 
-        MU, ST = gfh.vary_p0_hfdf_compute_mu_sigma_nonuni_grids(hm_job['gridx'], gridk, hm_job['n'], new_tfft, minf,maxf,times_mjd, hm_job['epoch'], p0emp)
+        # These changes allows the main code to run but the function doesn't make sense demanding some args as an object
+        MU, ST = gfh.vary_p0_hfdf_compute_mu_sigma_nonuni_grids(hm_job['gridx'], gridk, hm_job['n'], new_tfft, {"freq_band":[minf,maxf],"tim":times_mjd}, hm_job['epoch'], p0emp)
         info['MU'] = MU
         info['ST'] = ST
         CR = (hmap - MU.T) / ST.T
@@ -619,7 +624,7 @@ def run_tcw_injection(args, inj_provider=None,sour_to_het=None):
 # args = parse_args()
 
 # my_provider = provider_injections.provider_power_law(
-#     f0=800,
+#     f0=800.0,
 #     h0=2.4865e-23,
 #     mc=4e-4,
 #     n=11/3,
@@ -634,14 +639,14 @@ def run_tcw_injection(args, inj_provider=None,sour_to_het=None):
 args = parse_args()
 
 inj_provider = provider_injections.provider_power_law(
-    f0=800,
+    f0=800.0,
     h0=2.4865e-23,
     mc=4e-4,
     n=11/3,
 )
 
 sour_to_het = provider_injections.provider_power_law(
-    f0=800,
+    f0=800.0,
     h0=0.0,
     mc=4e-4,
     n=11/3,

@@ -6,15 +6,16 @@ from typing import Callable, Tuple
 
 def phase_from_frequency(tt,inject_fs):
     """
+    tt        : array of times [s]
     inject_fs : array of instantaneous frequencies [Hz]
-    tt        : array of times [s], same length
+    Both arrays must have the same length
 
     returns
     -------
     phase : array of phase [rad]
     """
-    inject_fs = np.asarray(inject_fs, dtype=float)
     tt = np.asarray(tt, dtype=float)
+    inject_fs = np.asarray(inject_fs, dtype=float)
 
     dt = np.hstack((0,np.diff(tt)))
     phase_cycles = np.cumsum(inject_fs * dt)
