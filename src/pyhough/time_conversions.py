@@ -30,6 +30,9 @@ def gps2mjd(tgps):
 
     tgps = np.asarray(tgps, dtype=float)
 
+    if np.any(np.isnan(tgps)):
+        raise ValueError
+
     mjd = tgps / SECONDS_IN_DAY + MJD_AT_GPS_EPOCH
 
     # Leap second correction (GPS linked to TAI, offset from UTC)
@@ -60,6 +63,9 @@ def tdt2tdb(mjd):
     if not isinstance(mjd, (int, float, np.ndarray)) or type(mjd) is bool:
         raise TypeError
 
+    if np.any(np.isnan(mjd)):
+        raise ValueError
+
     JD = mjd + 2400000.5
     g = np.deg2rad(np.mod(357.53 + 0.98560028 * (JD - 2451545.0), 360))
     tdb = 0.001658 * np.sin(g) + 0.000014 * np.sin(2*g)
@@ -84,6 +90,9 @@ def gmst(t):
 
     if not isinstance(t, (float, np.ndarray)):
         raise TypeError
+
+    if np.any(np.isnan(t)):
+        raise ValueError
 
     t = np.asarray(t, dtype=float)
 
@@ -125,7 +134,11 @@ def mjuliandate(*args):
     if len(args) == 1:
         if not isinstance(args[0], list):
             raise TypeError
+
         arr = np.asarray(args[0], dtype=float)
+
+        if np.any(np.isnan(arr)):
+            raise ValueError
 
         if arr.ndim == 1:
             arr = arr.reshape(1, -1)
@@ -144,6 +157,8 @@ def mjuliandate(*args):
             raise ValueError("Single-array input must have shape Nx3 or Nx6.")
 
     elif len(args) == 3:
+        if np.any(np.isnan(args)):
+            raise ValueError
         year, month, day = np.broadcast_arrays(
             *[np.asarray([a], dtype=float) for a in args])
         hour = np.zeros_like(year)
@@ -151,6 +166,8 @@ def mjuliandate(*args):
         second = np.zeros_like(year)
 
     elif len(args) == 6:
+        if np.any(np.isnan(args)):
+            raise ValueError
         year, month, day, hour, minute, second = np.broadcast_arrays(
             *[np.asarray([a], dtype=float) for a in args]
         )
@@ -278,6 +295,9 @@ def mjd2gps(mjd):
     if not isinstance(mjd, (float, np.ndarray)):
         raise TypeError
 
+    if np.any(np.isnan(mjd)):
+        raise ValueError
+
     return (mjd - MJD_AT_GPS_EPOCH) * SECONDS_IN_DAY + (leap_seconds(mjd) - TAI_UTC_AT_GPS_EPOCH)
 
 
@@ -297,6 +317,9 @@ def leap_seconds(mjd):
 
     if not isinstance(mjd, (float, np.ndarray)):
         raise TypeError
+
+    if np.any(np.isnan(mjd)):
+        raise ValueError
 
     leaptimes = np.array([
         41317,  # 1972 Jan 1,  TAI-UTC = 10

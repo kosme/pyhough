@@ -25,6 +25,11 @@ class Test_gps2mjd(test_helpers.Test_Helpers):
         self.assert_not_raises_exception(
             TypeError, [np.asarray([0.0, 1.0])])
 
+    def test_input_value(self):
+        self.assertRaises(ValueError, self.func, np.nan)
+        self.assertRaises(ValueError, self.func,
+                          np.asarray([1.0, np.nan, 2.0]))
+
     def test_output_type(self):
         self.assertIsInstance(self.func(0.0), np.ndarray,
                               "Failure to produce correct output type from a float value")
@@ -72,6 +77,10 @@ class Test_leapseconds(test_helpers.Test_Helpers):
         # Random value below the first defined value
         self.assertRaises(ValueError, self.func,
                           random.random() * self.MIN_VALUE)
+        # Nan
+        self.assertRaises(ValueError, self.func, np.nan)
+        self.assertRaises(ValueError, self.func,
+                          np.asarray([self.MIN_VALUE, np.nan, self.MAX_VALUE]))
 
         # Check that values in range do not throw an exception
         # Generate a random value inside the defined range
@@ -126,6 +135,8 @@ class Test_tdt2tdb(test_helpers.Test_Helpers):
             self.func(np.asarray([123.0, 123.0])), np.ndarray)
 
     def test_input_values(self):
+        self.assertRaises(ValueError, self.func, np.nan)
+        self.assertRaises(ValueError, self.func, np.asarray([np.nan, 173.17]))
         # Check that the input supports both negative and positive values
         self.assert_not_raises_exception(ValueError, [0])
         self.assert_not_raises_exception(ValueError, [475.0])
@@ -154,6 +165,10 @@ class Test_gmst(test_helpers.Test_Helpers):
         # Check expected input types do not raise an exception
         self.assert_not_raises_exception(TypeError, [123.0])
         self.assert_not_raises_exception(TypeError, [np.asarray([123])])
+
+    def test_input_value(self):
+        self.assertRaises(ValueError, self.func, np.nan)
+        self.assertRaises(ValueError, self.func, np.asarray([np.nan, 123.0]))
 
     def test_output_types(self):
         self.assertIsInstance(self.func(12.0), float)
@@ -232,6 +247,13 @@ class Test_mjuliandate(test_helpers.Test_Helpers):
                           random.random(), 2, 3, 4, 5, 6)
         self.assertRaises(ValueError, self.func,
                           random.randint(-10000, -1), 2, 3, 4, 5, 6)
+        self.assertRaises(ValueError, self.func,
+                          np.nan, 2, 3, 4, 5, 6)
+        self.assertRaises(ValueError, self.func,
+                          [np.nan, 2, 3])
+        self.assertRaises(ValueError, self.func,
+                          [np.nan, 2, 3, 4, 5, 6])
+        
         # Good values
         test_vals = []
         for y in [1, random.randint(2, 10000), random.randint(2, 10000)]:
@@ -244,6 +266,10 @@ class Test_mjuliandate(test_helpers.Test_Helpers):
         self.assertRaises(ValueError, self.func, 1, 13, 3, 4, 5, 6)
         self.assertRaises(ValueError, self.func, 1, 0, 3, 4, 5, 6)
         self.assertRaises(ValueError, self.func, 1, -1, 3, 4, 5, 6)
+        self.assertRaises(ValueError, self.func, 1, np.nan, 3, 4, 5, 6)
+        self.assertRaises(ValueError, self.func, [1, np.nan, 3])
+        self.assertRaises(ValueError, self.func, [1, np.nan, 3, 4, 5, 6])
+
         # Good values
         test_vals = []
         for m in [1, 12, random.randint(2, 11), random.randint(2, 11)]:
@@ -262,6 +288,10 @@ class Test_mjuliandate(test_helpers.Test_Helpers):
         self.assertRaises(ValueError, self.func, 5, 2, 29, 4, 5, 6)
         # November has only 30 days
         self.assertRaises(ValueError, self.func, 1, 11, 31, 4, 5, 6)
+        self.assertRaises(ValueError, self.func, 1, np.nan, 31, 4, 5, 6)
+        self.assertRaises(ValueError, self.func, [1, np.nan, 31])
+        self.assertRaises(ValueError, self.func, [1, np.nan, 31, 4, 5, 6])
+
         # Good values
         test_vals = []
         for d in [1, 31, random.randint(2, 30), random.randint(2, 30)]:
@@ -277,6 +307,9 @@ class Test_mjuliandate(test_helpers.Test_Helpers):
         # Bad values
         self.assertRaises(ValueError, self.func, 1, 2, 3, -1, 5, 6)
         self.assertRaises(ValueError, self.func, 1, 2, 3, 24, 5, 6)
+        self.assertRaises(ValueError, self.func, 1, 2, 3, np.nan, 5, 6)
+        self.assertRaises(ValueError, self.func, [1, 2, 3, np.nan, 5, 6])
+
         # Good values
         test_vals = []
         for h in [0, 23, random.randint(1, 22), random.randint(1, 22)]:
@@ -288,6 +321,9 @@ class Test_mjuliandate(test_helpers.Test_Helpers):
         # Bad values
         self.assertRaises(ValueError, self.func, 1, 2, 3, 4, -1, 6)
         self.assertRaises(ValueError, self.func, 1, 2, 3, 4, 60, 6)
+        self.assertRaises(ValueError, self.func, 1, 2, 3, 4, np.nan, 6)
+        self.assertRaises(ValueError, self.func, [1, 2, 3, 4, np.nan, 6])
+
         # Good values
         test_vals = []
         for m in [0, 59, random.randint(1, 58), random.randint(1, 58)]:
@@ -299,6 +335,9 @@ class Test_mjuliandate(test_helpers.Test_Helpers):
         # Bad values
         self.assertRaises(ValueError, self.func, 1, 2, 3, 4, 5, -1)
         self.assertRaises(ValueError, self.func, 1, 2, 3, 4, 5, 60)
+        self.assertRaises(ValueError, self.func, 1, 2, 3, 4, 5, np.nan)
+        self.assertRaises(ValueError, self.func, [1, 2, 3, 4, 5, np.nan])
+
         # Good values
         test_vals = []
         for s in [0, 59, random.randint(1, 58), random.randint(1, 58),
@@ -384,6 +423,11 @@ class Test_utc2gps(test_helpers.Test_Helpers):
                           random.random(), 2, 3, 4, 5, 6)
         self.assertRaises(ValueError, self.func,
                           random.randint(-10000, -1), 2, 3, 4, 5, 6)
+        self.assertRaises(ValueError, self.func,
+                          np.nan, 2, 3)
+        self.assertRaises(ValueError, self.func,
+                          np.nan, 2, 3, 4, 5, 6)
+
         # Good values
         test_vals = []
         for y in [1972, random.randint(1973, 10000), random.randint(1973, 10000)]:
@@ -395,6 +439,9 @@ class Test_utc2gps(test_helpers.Test_Helpers):
         self.assertRaises(ValueError, self.func, 1972, 13, 3, 4, 5, 6)
         self.assertRaises(ValueError, self.func, 1972, 0, 3, 4, 5, 6)
         self.assertRaises(ValueError, self.func, 1972, -1, 3, 4, 5, 6)
+        self.assertRaises(ValueError, self.func, 1972, np.nan, 3)
+        self.assertRaises(ValueError, self.func, 1972, np.nan, 3, 4, 5, 6)
+
         # Good values
         test_vals = []
         for m in [1, 12, random.randint(2, 11), random.randint(2, 11)]:
@@ -408,6 +455,9 @@ class Test_utc2gps(test_helpers.Test_Helpers):
         self.assertRaises(ValueError, self.func, 1972, 1, 0, 4, 5, 6)
         self.assertRaises(ValueError, self.func, 1972, 1,
                           random.randint(-31, -1), 4, 5, 6)
+        self.assertRaises(ValueError, self.func, 1972, 1, np.nan)
+        self.assertRaises(ValueError, self.func, 1972, 1, np.nan, 4, 5, 6)
+
         # Good values
         test_vals = []
         for d in [1, 31, random.randint(2, 30), random.randint(2, 30)]:
@@ -418,6 +468,8 @@ class Test_utc2gps(test_helpers.Test_Helpers):
         # Bad values
         self.assertRaises(ValueError, self.func, 1972, 2, 3, -1, 5, 6)
         self.assertRaises(ValueError, self.func, 1972, 2, 3, 24, 5, 6)
+        self.assertRaises(ValueError, self.func, 1972, 2, 3, np.nan, 5, 6)
+
         # Good values
         test_vals = []
         for h in [0, 23, random.randint(1, 22), random.randint(1, 22)]:
@@ -428,6 +480,8 @@ class Test_utc2gps(test_helpers.Test_Helpers):
         # Bad values
         self.assertRaises(ValueError, self.func, 1972, 2, 3, 4, -1, 6)
         self.assertRaises(ValueError, self.func, 1972, 2, 3, 4, 60, 6)
+        self.assertRaises(ValueError, self.func, 1972, 2, 3, 4, np.nan, 6)
+
         # Good values
         test_vals = []
         for m in [0, 59, random.randint(1, 58), random.randint(1, 58)]:
@@ -438,6 +492,8 @@ class Test_utc2gps(test_helpers.Test_Helpers):
         # Bad values
         self.assertRaises(ValueError, self.func, 1972, 2, 3, 4, 5, -1)
         self.assertRaises(ValueError, self.func, 1972, 2, 3, 4, 5, 60)
+        self.assertRaises(ValueError, self.func, 1972, 2, 3, 4, 5, np.nan)
+
         # Good values
         test_vals = []
         for s in [0, 59, random.randint(1, 58), random.randint(1, 58),
@@ -468,6 +524,11 @@ class Test_mjd2gps(test_helpers.Test_Helpers):
         # Check the expected types don't fail
         self.assert_not_raises_exception(TypeError,
                                          [44250.0], [np.asarray([41319.0, 54321.123])])
+
+    def test_input_values(self):
+        self.assertRaises(ValueError, self.func, np.nan)
+        self.assertRaises(ValueError, self.func,
+                          np.asarray([np.nan, 54321.123]))
 
     def test_output_type(self):
         self.assertIsInstance(self.func(44250.0), float)
