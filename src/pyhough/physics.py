@@ -79,7 +79,7 @@ def calc_mc_with_k(k):
 
     Parameters
     ----------
-    k : float or array-like
+    k : float or ndarray
         k parameter(s)
 
     Returns
@@ -113,7 +113,7 @@ def calc_k(mc):
 
     Parameters
     ----------
-    mc : float or array-like
+    mc : float or ndarray
         Chirp mass in solar masses.
 
     Returns
@@ -237,9 +237,9 @@ def shift_x0_by_time(x0, kn, delta_t, n):
     Shift x0 by a time offset delta_t.
     Parameters
     ----------
-    x0 : float or array-like
+    x0 : float or ndarray
         Initial x0 value(s)
-    kn : float or array-like
+    kn : float or ndarray
         k parameter(s)
     delta_t : float
         Time shift in seconds
@@ -294,7 +294,7 @@ def get_f0_from_x0(x0, n):
 
     Parameters
     ----------
-    x0 : float or array-like
+    x0 : float or ndarray
         x0 parameter(s)
     n : float
         Braking index
@@ -329,7 +329,7 @@ def get_x0_from_f0(f0, n):
 
     Parameters
     ----------
-    f0 : float or array-like
+    f0 : float or ndarray
         Frequency value(s)
     n : float
         Braking index
