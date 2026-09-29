@@ -81,6 +81,9 @@ class Test_calc_mc_with_k(test_helpers.Test_Helpers):
         self.assertRaises(ValueError, self.func, np.asarray([0.0]))
         self.assertRaises(ValueError, self.func, np.asarray([1, 2, 0.0, 5]))
         self.assertRaises(ValueError, self.func, np.asarray([1, 2, -1e-23, 5]))
+        self.assertRaises(ValueError, self.func, np.nan)
+        self.assertRaises(ValueError, self.func,
+                          np.asarray([1.3, np.nan, 2.7]))
 
         # Assert no exception is thrown for acceptable inputs
         self.assert_not_raises_exception(ValueError, [1e-23])
@@ -129,6 +132,9 @@ class Test_calc_k(test_helpers.Test_Helpers):
         self.assertRaises(ValueError, self.func, -1e23)
         self.assertRaises(ValueError, self.func, np.asarray([-1.0]))
         self.assertRaises(ValueError, self.func, np.asarray([1, 2, -1.0, 5]))
+        self.assertRaises(ValueError, self.func, np.nan)
+        self.assertRaises(ValueError, self.func,
+                          np.asarray([1.3, np.nan, 2.7]))
 
         # Assert no exception is thrown for acceptable inputs
         self.assert_not_raises_exception(ValueError, [1e-23])
@@ -167,10 +173,6 @@ class Test_fdot_chirp(test_helpers.Test_Helpers):
 
         # Assert expected types are not rejected
         self.assert_not_raises_exception(TypeError, [1.0, 1.0])
-        self.assert_not_raises_exception(TypeError, [
-            np.asarray([1.0, 2.3]),
-            np.asarray([1.0, 2.3])
-        ])
 
     def test_input_types_arg2(self):
         # Assert rejects wrong input types
@@ -182,24 +184,12 @@ class Test_fdot_chirp(test_helpers.Test_Helpers):
 
         # Assert expected types are not rejected
         self.assert_not_raises_exception(TypeError, [1.0, 1.0])
-        self.assert_not_raises_exception(TypeError, [
-            np.asarray([1.0, 2.3]),
-            np.asarray([3.7, 9.2])
-        ])
 
     def test_input_values_arg1(self):
         # Assert it rejects zero and negative values
         self.assertRaises(ValueError, self.func, 0.0, 1.0)
         self.assertRaises(ValueError, self.func, -1.0, 1.0)
-        self.assertRaises(ValueError, self.func,
-                          np.asarray([1.0, 2.3, 0.0, 1.0]),
-                          np.asarray([1.0, 1.0, 1.0, 1.0]))
-        self.assertRaises(ValueError, self.func,
-                          np.asarray([1.0, 2.3, -1e23, 3.17]),
-                          np.asarray([1.0, 1.0, 1.0, 1.0]))
-        self.assertRaises(ValueError, self.func,
-                          np.asarray([1.0, 2.3, -1e-23, 3.17]),
-                          np.asarray([1.0, 1.0, 1.0, 1.0]))
+        self.assertRaises(ValueError, self.func, np.nan, 1.0)
 
         # Assert no exception is thrown for acceptable inputs
         self.assert_not_raises_exception(ValueError, [1.0, 19.57])
@@ -210,15 +200,7 @@ class Test_fdot_chirp(test_helpers.Test_Helpers):
         # Assert it rejects out of range values (zero or negative values)
         self.assertRaises(ValueError, self.func, 1.0, -1.0)
         self.assertRaises(ValueError, self.func, 1.0, 0.0)
-        self.assertRaises(ValueError, self.func,
-                          np.asarray([1.0, 2.3, 1.0, 1.23]),
-                          np.asarray([1.0, 1.0, 0.0, 1.0]))
-        self.assertRaises(ValueError, self.func,
-                          np.asarray([1.0, 2.3, 1.0, 1.23]),
-                          np.asarray([1.0, 1.0, -1e-23, 1.0]))
-        self.assertRaises(ValueError, self.func,
-                          np.asarray([1.0, 2.3, 1.0, 1.23]),
-                          np.asarray([1.0, 1.0, -1e23, 1.0]))
+        self.assertRaises(ValueError, self.func, 1.0, np.nan)
 
         # Assert no exception is thrown for acceptable inputs
         self.assert_not_raises_exception(ValueError, [1.0, 19.57])
@@ -226,11 +208,7 @@ class Test_fdot_chirp(test_helpers.Test_Helpers):
         self.assert_not_raises_exception(ValueError, [1.0, 1e-23])
 
     def test_output_type(self):
-        self.assertIsInstance(self.func(1.0, 1.0), np.ndarray)
-        self.assertIsInstance(self.func(np.asarray(
-            [1.0]), np.asarray([1.0])), np.ndarray)
-        self.assertIsInstance(self.func(np.asarray(
-            [1.0, 2.0]), np.asarray([1.0, 2.0])), np.ndarray)
+        self.assertIsInstance(self.func(1.0, 1.0), float)
 
 
 class Test_calc_time_to_coalescence(test_helpers.Test_Helpers):
@@ -258,56 +236,46 @@ class Test_calc_time_to_coalescence(test_helpers.Test_Helpers):
     def test_input_good_args_type(self):
         # Assert expected types are not rejected
         self.assert_not_raises_exception(TypeError, [1.0, 1.0])
-        self.assert_not_raises_exception(TypeError, [
-            np.asarray([1.0, 2.3]),
-            np.asarray([3.7, 9.2])
-        ])
 
     def test_input_values(self):
         # Assert it rejects out of range values (negative or zero values)
         self.assertRaises(ValueError, self.func, 0.0, 1.0)
-        self.assertRaises(ValueError, self.func, -1.0, 1.0)
+        self.assertRaises(ValueError, self.func, -1e-23, 1.0)
+        self.assertRaises(ValueError, self.func, -1e23, 1.0)
         self.assertRaises(ValueError, self.func, 1.0, 0.0)
-        self.assertRaises(ValueError, self.func, 1.0, -1.0)
-        self.assertRaises(ValueError, self.func,
-                          np.asarray([-1e-23]), np.asarray([1.0]))
-        self.assertRaises(ValueError, self.func,
-                          np.asarray([-1e23]), np.asarray([1.0]))
-        self.assertRaises(ValueError, self.func,
-                          np.asarray([1.0]), np.asarray([-1e-23]))
-        self.assertRaises(ValueError, self.func,
-                          np.asarray([1.0]), np.asarray([-1e23]))
-        self.assertRaises(ValueError, self.func,
-                          np.asarray([1.0, 2.0, 0.0, 5.0]),
-                          np.asarray([1.0, 2.0, 1.0, 5.0])
-                          )
-        self.assertRaises(ValueError, self.func,
-                          np.asarray([1.0, 2.0, -1.0, 5.0]),
-                          np.asarray([1.0, 2.0, 1.0, 5.0])
-                          )
-        self.assertRaises(ValueError, self.func,
-                          np.asarray([1.0, 2.0, 1.0, 5.0]),
-                          np.asarray([1.0, 2.0, 0.0, 5.0])
-                          )
-        self.assertRaises(ValueError, self.func,
-                          np.asarray([1.0, 2.0, 1.0, 5.0]),
-                          np.asarray([1.0, 2.0, -1.0, 5.0])
-                          )
+        self.assertRaises(ValueError, self.func, 1.0, -1e-23)
+        self.assertRaises(ValueError, self.func, 1.0, -1e23)
+        self.assertRaises(ValueError, self.func, np.nan, 1.0)
+        self.assertRaises(ValueError, self.func, 1.0, np.nan)
 
         # Assert no exception is thrown for acceptable inputs
-        self.assert_not_raises_exception(ValueError, [1.0, 19.57])
+        self.assert_not_raises_exception(ValueError, [1e23, 19.57])
+        self.assert_not_raises_exception(ValueError, [1e-23, 19.57])
         self.assert_not_raises_exception(ValueError, [1975.17, 1e-23])
-        self.assert_not_raises_exception(
-            ValueError, [np.asarray(1e71), np.asarray(1.23e-12)])
-        self.assert_not_raises_exception(
-            ValueError, [np.asarray([492]), np.asarray([492])])
+        self.assert_not_raises_exception(ValueError, [1975.17, 1e23])
 
     def test_output_type(self):
-        self.assertIsInstance(self.func(1.0, 1.0), np.ndarray)
-        self.assertIsInstance(self.func(np.asarray(
-            [1.0]), np.asarray([1.0])), np.ndarray)
-        self.assertIsInstance(self.func(np.asarray(
-            [1.0, 2.0]), np.asarray([1.0, 2.0])), np.ndarray)
+        self.assertIsInstance(self.func(1.0, 1.0), float)
+
+    def test_output_value_monotonic(self):
+        mass_lower = 12e3
+        mass = 12e5
+        mass_higher = 12e8
+        frequency = 1e1
+        frequency_higher = 1e3
+        frequency_lower = 1e-2
+        # A higher mass should produce a smaller time
+        self.assertGreater(self.func(mass, frequency),
+                           self.func(mass_higher, frequency))
+        # A lower mass should produce a higher time
+        self.assertLess(self.func(mass, frequency),
+                        self.func(mass_lower, frequency))
+        # A higher frequency should produce a smaller time
+        self.assertGreater(self.func(mass, frequency),
+                           self.func(mass, frequency_higher))
+        # A lower frequency should produce a higher time
+        self.assertLess(self.func(mass, frequency),
+                        self.func(mass, frequency_lower))
 
 
 class Test_shift_x0_by_time(test_helpers.Test_Helpers):
@@ -366,10 +334,18 @@ class Test_shift_x0_by_time(test_helpers.Test_Helpers):
             1.0, 2.0
         ], ignore_exception=ValueError)
 
+    def test_input_arg1_values(self):
+        self.assertRaises(ValueError, self.func, np.nan, 1.0, 1.0, 1.0)
+        self.assertRaises(ValueError, self.func,
+                          np.asarray([1.0, np.nan, 1.0]),
+                          np.asarray([1.0, 1.0, 1.0]),
+                          1.0, 1.0)
+
     def test_input_arg2_values(self):
-        self.assertRaises(ValueError, self.func, 1.0, 0.0, 0.0, 1.0)
-        self.assertRaises(ValueError, self.func, 1.0, -1e23, 0.0, 1.0)
-        self.assertRaises(ValueError, self.func, 1.0, -1e-23, 0.0, 1.0)
+        self.assertRaises(ValueError, self.func, 1.0, 0.0, 0.5, 1.0)
+        self.assertRaises(ValueError, self.func, 1.0, -1e23, 0.5, 1.0)
+        self.assertRaises(ValueError, self.func, 1.0, -1e-23, 0.5, 1.0)
+        self.assertRaises(ValueError, self.func, 1.0, np.nan, 0.5, 1.0)
         self.assertRaises(ValueError, self.func,
                           np.asarray([1.0, 2.0]),
                           np.asarray([1.0, 0.0]),
@@ -382,9 +358,17 @@ class Test_shift_x0_by_time(test_helpers.Test_Helpers):
                           np.asarray([1.0, 2.0]),
                           np.asarray([1.0, -1e-23]),
                           1.0, 1.0)
+        self.assertRaises(ValueError, self.func,
+                          np.asarray([1.0, 2.0]),
+                          np.asarray([1.0, np.nan]),
+                          1.0, 1.0)
 
     def test_input_arg3_values(self):
         self.assertRaises(ValueError, self.func, 1.0, 1.0, 0.0, 1.0)
+        self.assertRaises(ValueError, self.func, 1.0, 1.0, np.nan, 1.0)
+
+    def test_input_arg4_values(self):
+        self.assertRaises(ValueError, self.func, 1.0, 1.0, 0.5, np.nan)
 
     def test_output_type(self):
         x0 = 1.0
@@ -433,10 +417,18 @@ class Test_get_f0_from_x0(test_helpers.Test_Helpers):
         self.assertRaises(TypeError, self.func, 1.0, True)
         self.assertRaises(TypeError, self.func, 1.0, np.asarray([1.0]))
 
+    def test_input_arg1_bad_value(self):
+        self.assertRaises(ValueError, self.func, np.nan, 2.0)
+        self.assertRaises(ValueError, self.func,
+                          np.asarray([1.0, np.nan, 2.0]), 2.0)
+
     def test_input_arg2_bad_value(self):
         self.assertRaises(ValueError, self.func, 1.0, 1.0)
+        self.assertRaises(ValueError, self.func, 1.0, np.nan)
         self.assertRaises(ValueError, self.func,
                           np.asarray([1.0, 1e23, 1e-23, -1e-23, -1e23]), 1.0)
+        self.assertRaises(ValueError, self.func,
+                          np.asarray([1.0, 1e23, 1e-23, -1e-23, -1e23]), np.nan)
 
     def test_output_shape(self):
         x0 = 1.0
@@ -481,8 +473,16 @@ class Test_get_x0_from_f0(test_helpers.Test_Helpers):
     def test_input_arg1_bad_value(self):
         self.assertRaises(ValueError, self.func, 0.0, 2.0)
         self.assertRaises(ValueError, self.func, -1e-23, 2.0)
+        self.assertRaises(ValueError, self.func, np.nan, 2.0)
         self.assertRaises(ValueError, self.func,
                           np.asarray([0.0, 1e23, 1e-23, -1e-23, -1e23]), 3.17)
+        self.assertRaises(ValueError, self.func,
+                          np.asarray([np.nan, 1e23, 1e-23, -1e-23, -1e23]), 3.17)
+
+    def test_input_arg2_bad_value(self):
+        self.assertRaises(ValueError, self.func, 34.17, np.nan)
+        self.assertRaises(ValueError, self.func,
+                          np.asarray([34.17, 3.7, 4.92]), np.nan)
 
     def test_output_shape(self):
         x0 = 1.0

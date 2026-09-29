@@ -90,7 +90,7 @@ def calc_mc_with_k(k):
     if not isinstance(k, (float, np.ndarray)):
         raise TypeError("Input must be float or ndarray")
 
-    if np.any(k <= 0):
+    if np.any(k <= 0) or np.any(np.isnan(k)):
         raise ValueError("k must be a positive, non-zero value.")
 
     # Assuming constants() is a function that returns the constants dictionary
@@ -124,8 +124,8 @@ def calc_k(mc):
     if not isinstance(mc, (float, np.ndarray)):
         raise TypeError("Input must be float or ndarray")
 
-    if np.any(mc <= 0):
-        raise ValueError("Mass must be a postive, non-zero value.")
+    if np.any(mc <= 0) or np.any(np.isnan(mc)):
+        raise ValueError("Mass must be a positive, non-zero value.")
 
     cc = constants()
 
@@ -143,25 +143,25 @@ def calc_fdot_chirp(mc, fgw):
 
     Parameters
     ----------
-    mc : float or array-like
+    mc : float
         Chirp mass in solar masses.
-    fgw : float or array-like
+    fgw : float
         Gravitational-wave frequency in Hz.
 
     Returns
     -------
-    fdot : ndarray
+    fdot : float
         Frequency derivative (Hz/s).
     """
 
-    if not isinstance(mc, (float, np.ndarray)):
-        raise TypeError("mc must be a float or ndarray")
-    if not isinstance(fgw, (float, np.ndarray)):
-        raise TypeError("fgw must be a float or ndarray")
+    if not isinstance(mc, float):
+        raise TypeError("mc must be a float")
+    if not isinstance(fgw, float):
+        raise TypeError("fgw must be a float")
 
-    if np.any(mc <= 0):
+    if mc <= 0 or np.isnan(mc):
         raise ValueError("mc must be a positive, non-zero value.")
-    if np.any(fgw <= 0):
+    if fgw <= 0 or np.isnan(fgw):
         raise ValueError("fgw must be a positive, non-zero value.")
 
     consts = constants()
@@ -182,10 +182,6 @@ def calc_fdot_chirp(mc, fgw):
         * fgw**(11.0 / 3.0)
     )
 
-    # Ensure the output is an instance of ndarray in all input conditions
-    if not isinstance(fdot, np.ndarray):
-        fdot = np.asarray([fdot], dtype=float)
-
     return fdot
 
 
@@ -195,25 +191,25 @@ def calc_time_to_coalescence(Mc, fgw):
 
     Parameters
     ----------
-    Mc : float or array-like
+    Mc : float
         Chirp mass in solar masses.
-    fgw : float or array-like
+    fgw : float
         Gravitational-wave frequency in Hz.
 
     Returns
     -------
-    tau : ndarray
+    tau : float
         Time to coalescence (seconds).
     """
 
-    if not isinstance(Mc, (float, np.ndarray)):
-        raise TypeError("Mc must be a float or ndarray")
-    if not isinstance(fgw, (float, np.ndarray)):
-        raise TypeError("fgw must be a float or ndarray")
+    if not isinstance(Mc, float):
+        raise TypeError("Mc must be a float")
+    if not isinstance(fgw, float):
+        raise TypeError("fgw must be a float")
 
-    if np.any(Mc <= 0):
+    if Mc <= 0 or np.isnan(Mc):
         raise ValueError("Mc must be a positive, non-zero value.")
-    if np.any(fgw <= 0):
+    if fgw <= 0 or np.isnan(fgw):
         raise ValueError("fgw must be a positive, non-zero value.")
 
     consts = constants()
@@ -232,10 +228,6 @@ def calc_time_to_coalescence(Mc, fgw):
         * (np.pi * fgw)**(-8.0 / 3.0)
         * (G * Mc_si / c**3)**(-5.0 / 3.0)
     )
-
-    # Ensure the output is an instance of ndarray in all input conditions
-    if not isinstance(tau, np.ndarray):
-        tau = np.asarray([tau], dtype=float)
 
     return tau
 
@@ -272,15 +264,21 @@ def shift_x0_by_time(x0, kn, delta_t, n):
     if not isinstance(n, float):
         raise TypeError("n must be a float")
 
-    if np.any(kn <= 0):
+    if np.any(np.isnan(x0)):
+        raise ValueError("All X0 values must be numerical values.")
+
+    if np.any(kn <= 0) or np.any(np.isnan(kn)):
         raise ValueError("All kn values must be greater than zero.")
 
     # This ensures that the output type condition holds
     if np.size(x0) < np.size(kn):
         raise ValueError("x0 and kn must have the same size")
 
-    if delta_t == 0:
-        raise ValueError("Delta_t must no be zero")
+    if delta_t == 0 or np.isnan(delta_t):
+        raise ValueError("Delta_t must no be a non-zero value")
+
+    if np.isnan(n):
+        raise ValueError("N must be a numerical value")
 
     # to decrease frequency (shift from ref time = 0.5 to 0), make delta_t negative so x > x0 meaning f < f0;
     # to increase frequency (shift from ref time = 0 to 0.5), delta_t must be positive so x < x0 --> f > f0
@@ -313,8 +311,15 @@ def get_f0_from_x0(x0, n):
     if not isinstance(n, float):
         raise TypeError("n must be a float")
 
+    if np.any(np.isnan(x0)):
+        raise ValueError("All X0 values must be numerical values.")
+
     if n == 1.0:
         raise ValueError("n MUST NOT be 1.0")
+
+    if np.isnan(n):
+        raise ValueError("N must be a numerical value")
+
     return np.power(x0, -1.0 / (n - 1.0))
 
 
@@ -341,7 +346,10 @@ def get_x0_from_f0(f0, n):
     if not isinstance(n, float):
         raise TypeError("n must be a float")
 
-    if np.any(f0 <= 0):
+    if np.any(f0 <= 0) or np.any(np.isnan(f0)):
         raise ValueError("Frequency must be a positive, non- zero value")
+
+    if np.isnan(n):
+        raise ValueError("N must be a numerical value")
 
     return 1.0 / np.power(f0, n - 1.0)
