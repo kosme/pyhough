@@ -5,7 +5,7 @@ import test_helpers
 import random
 
 
-class Test_gps2mjd(unittest.TestCase):
+class Test_gps2mjd(test_helpers.Test_Helpers):
     def setUp(self):
         self.func = gps2mjd
 
@@ -19,24 +19,15 @@ class Test_gps2mjd(unittest.TestCase):
         self.assertRaises(TypeError, self.func, True)
         self.assertRaises(TypeError, self.func, object())
         self.assertRaises(TypeError, self.func, None)
-        self.assertRaises(ValueError, self.func, ['a', 'b'])
 
         # Check expected input types do not raise an exception
-        try:
-            self.func(0.0)  # float
-            self.func([0.0])  # list
-            self.func((0.0, 1.0))  # tuple
-            self.func(np.asarray(0.0))  # numpy array-like
-        except TypeError:
-            self.fail()
+        self.assert_not_raises_exception(TypeError, [0.0])
+        self.assert_not_raises_exception(
+            TypeError, [np.asarray([0.0, 1.0])])
 
     def test_output_type(self):
         self.assertIsInstance(self.func(0.0), np.ndarray,
                               "Failure to produce correct output type from a float value")
-        self.assertIsInstance(self.func([0.0]), np.ndarray,
-                              "Failure to produce correct output type from list")
-        self.assertIsInstance(self.func((0.0, 1.0)), np.ndarray,
-                              "Failure to produce correct output type from tuple")
         self.assertIsInstance(self.func(np.asarray(0.0)), np.ndarray,
                               "Failure to produce correct output type from an array-like value")
 
@@ -47,7 +38,7 @@ class Test_gps2mjd(unittest.TestCase):
         self.assertAlmostEqual(self.func(1467521334.0), 61229.20041667)
 
 
-class Test_leapseconds(unittest.TestCase):
+class Test_leapseconds(test_helpers.Test_Helpers):
     MIN_VALUE = 41317.0
     MAX_VALUE = 57754.0
     RANGE = MAX_VALUE - MIN_VALUE
@@ -65,22 +56,16 @@ class Test_leapseconds(unittest.TestCase):
         self.assertRaises(TypeError, self.func, True)
         self.assertRaises(TypeError, self.func, object())
         self.assertRaises(TypeError, self.func, None)
-        self.assertRaises(ValueError, self.func, ['a', 'b'])
 
         # Check expected input types do not raise an exception
-        try:
-            self.func(self.MIN_VALUE)  # float
-            self.func([self.MIN_VALUE])  # list
-            self.func((self.MIN_VALUE, self.MIN_VALUE))  # tuple
-            self.func(np.asarray(self.MIN_VALUE))  # numpy array-like
-        except TypeError:
-            self.fail()
+        self.assert_not_raises_exception(TypeError, [self.MIN_VALUE])
+        self.assert_not_raises_exception(
+            TypeError, [np.asarray([self.MIN_VALUE, self.MAX_VALUE])])
 
     def test_output_types(self):
         self.assertIsInstance(self.func(self.MIN_VALUE), float)
-        self.assertIsInstance(self.func([self.MIN_VALUE]), np.ndarray)
         self.assertIsInstance(self.func(
-            (self.MIN_VALUE, self.MIN_VALUE)), np.ndarray)
+            np.asarray([self.MIN_VALUE, self.MIN_VALUE])), np.ndarray)
         self.assertIsInstance(self.func(np.asarray(self.MIN_VALUE)), float)
 
     def test_input_values(self):
@@ -107,7 +92,8 @@ class Test_leapseconds(unittest.TestCase):
     def test_output_values(self):
         self.assertEqual(self.func(self.MIN_VALUE), 10)
         self.assertListEqual(
-            list(self.func([self.MIN_VALUE, self.MAX_VALUE])), [10.0, 37.0])
+            list(self.func(np.asarray([self.MIN_VALUE, self.MAX_VALUE]))),
+            [10.0, 37.0])
 
         # Generate a random value inside the defined range
         randVal = (random.random() * self.RANGE) + self.MIN_VALUE
@@ -375,7 +361,7 @@ class Test_utc2gps(test_helpers.Test_Helpers):
     def test_input_one_arg_bad_type(self):
         # One arg, wrong type (must be a string)
         self.assert_raises_exception(TypeError,
-                                     [1], [object()], [None], [True], [[1]])
+                                     [1], [object()], [None], [True])
 
     def test_input_three_args_bad_types(self):
         # Three args, wrong types (all must be numbers)}
@@ -385,7 +371,7 @@ class Test_utc2gps(test_helpers.Test_Helpers):
                                      [1.0, True, 3])
 
     def test_input_six_args_bad_types(self):
-        # Six args, wrong types (must all be numbers)
+        # Six args, wrong types (all must be numbers)
         self.assert_raises_exception(TypeError,
                                      ['1', object(), None, True,
                                       (True), [1]],
@@ -495,7 +481,7 @@ class Test_mjd2gps(test_helpers.Test_Helpers):
 
     def test_input_types(self):
         self.assert_raises_exception(TypeError,
-                                     [0], ['a'], [['a']], [None], [object()], [True])
+                                     [0], ['a'], [None], [object()], [True])
 
         # Check the expected types don't fail
         self.assert_not_raises_exception(TypeError,

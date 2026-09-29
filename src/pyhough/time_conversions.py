@@ -15,7 +15,7 @@ def gps2mjd(tgps):
 
     Parameters
     ----------
-    tgps : float or array-like
+    tgps : float or ndarray
         GPS time in seconds.
 
     Returns
@@ -25,7 +25,7 @@ def gps2mjd(tgps):
     """
 
     # Reject wrong input types
-    if not isinstance(tgps, (float, list, tuple, np.ndarray)):
+    if not isinstance(tgps, (float, np.ndarray)):
         raise TypeError
 
     tgps = np.asarray(tgps, dtype=float)
@@ -82,8 +82,8 @@ def gmst(t):
         GMST in hours (range [0, 24)).
     """
 
-    if not isinstance(t, (float, np.ndarray)) or type(t) is bool:
-        raise ValueError
+    if not isinstance(t, (float, np.ndarray)):
+        raise TypeError
 
     t = np.asarray(t, dtype=float)
 
@@ -273,6 +273,9 @@ def mjd2gps(mjd):
     gps : float or ndarray
     """
 
+    if not isinstance(mjd, (float, np.ndarray)):
+        raise TypeError
+
     return (mjd - MJD_AT_GPS_EPOCH) * SECONDS_IN_DAY + (leap_seconds(mjd) - TAI_UTC_AT_GPS_EPOCH)
 
 
@@ -282,7 +285,7 @@ def leap_seconds(mjd):
 
     Parameters
     ----------
-    mjd : float or array-like
+    mjd : float or ndarray
 
     Returns
     -------
@@ -290,7 +293,7 @@ def leap_seconds(mjd):
         TAI-UTC in seconds.
     """
 
-    if not isinstance(mjd, (float, list, tuple, np.ndarray)):
+    if not isinstance(mjd, (float, np.ndarray)):
         raise TypeError
 
     leaptimes = np.array([
