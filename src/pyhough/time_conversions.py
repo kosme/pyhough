@@ -123,6 +123,8 @@ def mjuliandate(*args):
     """
 
     if len(args) == 1:
+        if not isinstance(args[0], list):
+            raise TypeError
         arr = np.asarray(args[0], dtype=float)
 
         if arr.ndim == 1:

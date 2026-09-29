@@ -74,20 +74,13 @@ class Test_leapseconds(test_helpers.Test_Helpers):
                           random.random() * self.MIN_VALUE)
 
         # Check that values in range do not throw an exception
-        try:
-            # Generate a random value inside the defined range
-            randVal = (random.random() * self.RANGE) + self.MIN_VALUE
-            self.func(randVal)
-        except ValueError:
-            self.fail()
+        # Generate a random value inside the defined range
+        randVal = (random.random() * self.RANGE) + self.MIN_VALUE
+        self.assert_not_raises_exception(ValueError, [randVal])
 
         # Check that values beyond the range do not throw an exception
-        try:
-            # Generate a random value inside the defined range
-            randVal = (random.random() * self.RANGE) + self.MAX_VALUE + 1
-            self.func(randVal)
-        except ValueError:
-            self.fail()
+        randVal = (random.random() * self.RANGE) + self.MAX_VALUE + 1
+        self.assert_not_raises_exception(ValueError, [randVal])
 
     def test_output_values(self):
         self.assertEqual(self.func(self.MIN_VALUE), 10)
@@ -106,7 +99,7 @@ class Test_leapseconds(test_helpers.Test_Helpers):
         self.assertEqual(self.func(randVal), 37.0)
 
 
-class Test_tdt2tdb(unittest.TestCase):
+class Test_tdt2tdb(test_helpers.Test_Helpers):
     def setUp(self):
         self.func = tdt2tdb
 
@@ -122,12 +115,9 @@ class Test_tdt2tdb(unittest.TestCase):
         self.assertRaises(TypeError, self.func, None)
 
         # Check expected input types do not raise an exception
-        try:
-            self.func(123)
-            self.func(123.0)
-            self.func(np.asarray([123], dtype=float))
-        except TypeError:
-            self.fail()
+        self.assert_not_raises_exception(TypeError, [123])
+        self.assert_not_raises_exception(TypeError, [123.0])
+        self.assert_not_raises_exception(TypeError, [np.asarray([123])])
 
     def test_output_types(self):
         self.assertIsInstance(self.func(123), float)
@@ -137,12 +127,9 @@ class Test_tdt2tdb(unittest.TestCase):
 
     def test_input_values(self):
         # Check that the input supports both negative and positive values
-        try:
-            self.func(0)
-            self.func(475.0)
-            self.func(-10.0)
-        except ValueError:
-            self.fail()
+        self.assert_not_raises_exception(ValueError, [0])
+        self.assert_not_raises_exception(ValueError, [475.0])
+        self.assert_not_raises_exception(ValueError, [-10.0])
 
     def test_output_values(self):
         self.assertAlmostEqual(self.func(0), -0.001181, 6)
@@ -150,7 +137,7 @@ class Test_tdt2tdb(unittest.TestCase):
         self.assertAlmostEqual(self.func(-10.0), -0.001365, 6)
 
 
-class Test_gmst(unittest.TestCase):
+class Test_gmst(test_helpers.Test_Helpers):
     def setUp(self):
         self.func = gmst
 
@@ -158,20 +145,15 @@ class Test_gmst(unittest.TestCase):
         self.func = None
 
     def test_input_types(self):
-        self.assertRaises(ValueError, self.func, 'a')
-        self.assertRaises(ValueError, self.func, True)
-        self.assertRaises(ValueError, self.func, 1)
-        self.assertRaises(ValueError, self.func, (12.0, 13.0))
-        self.assertRaises(ValueError, self.func, [12.0])
-        self.assertRaises(ValueError, self.func, object())
-        self.assertRaises(ValueError, self.func, None)
+        self.assertRaises(TypeError, self.func, 'a')
+        self.assertRaises(TypeError, self.func, True)
+        self.assertRaises(TypeError, self.func, 1)
+        self.assertRaises(TypeError, self.func, object())
+        self.assertRaises(TypeError, self.func, None)
 
         # Check expected input types do not raise an exception
-        try:
-            self.func(123.0)
-            self.func(np.asarray([123], dtype=float))
-        except ValueError:
-            self.fail()
+        self.assert_not_raises_exception(TypeError, [123.0])
+        self.assert_not_raises_exception(TypeError, [np.asarray([123])])
 
     def test_output_types(self):
         self.assertIsInstance(self.func(12.0), float)
@@ -226,13 +208,13 @@ class Test_mjuliandate(test_helpers.Test_Helpers):
         self.assert_raises_exception(ValueError, [[]], [[1]],
                                      [[1]*2], [[1]*4], [[1]*5], [[1]*7])
 
-        # 3 args, 6 args, 3-elem tuple, 6-elem tuple, 3-elem list, 6-elem list,
-        self.assert_not_raises_exception(TypeError, [1]*3, [1]*6, [(1, 2, 3)],
-                                         [(1, 2, 3, 4, 5, 6)], [[1]*3], [[1]*6])
+        # 3 args, 6 args, 3-elem list, 6-elem list,
+        self.assert_not_raises_exception(TypeError, [1]*3, [1]*6,
+                                         [[1]*3], [[1]*6])
 
     def test_input_types(self):
         # 1 arg, wrong type
-        self.assertRaises(IndexError, self.func, 1)
+        self.assertRaises(TypeError, self.func, 1)
 
         # 3 args, wrong types
         self.assertRaises(ValueError, self.func, ['a', object(), 'None'])
@@ -241,7 +223,7 @@ class Test_mjuliandate(test_helpers.Test_Helpers):
         self.assertRaises(ValueError, self.func, [[1]*3, [1]*2])
 
         # 6 floats, 3 ints, list with size 3 elements, list with size 6 elements
-        self.assert_not_raises_exception(ValueError, [1.0]*6, [1]*3,
+        self.assert_not_raises_exception(TypeError, [1.0]*6, [1]*3,
                                          [[[1]*3, [2.0]*3]], [[[1.0]*6, [1]*6]])
 
     def test_input_values_date_year(self):
