@@ -207,9 +207,10 @@ def LongT_GENERALIZED_fasthough(
     # ---- Update hm_job in place ----
     hm_job['gridx'] = np.arange(minx0, maxx0, dx)
     hm_job["dx"] = dx
-    hm_job["which_hough"] = "gfh"
+    hm_job["which_hough"] = "gfh"  # What is the use of this????
 
     return hmap
+
 
 def make_hm_job_struct(minf, maxf, TFFT, dur, n, ref_perc_time, gridk, epoch):
 
@@ -371,7 +372,7 @@ def LongT_GENERALIZED_fasthough_nonuni(peaks, hm_job):
     # Update hm_job with output parameters
     hm_job['gridx'] = gridx[:-1]
     hm_job['dx'] = np.diff(gridx)
-    hm_job['which_hough'] = 'gfh_nonuni'
+    hm_job['which_hough'] = 'gfh_nonuni'  # What is the use of this????
 
     return hfdf
 

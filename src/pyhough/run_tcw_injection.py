@@ -33,7 +33,7 @@ def parse_args():
         "--ifo",
         default="H1",
         choices=["H1", "L1"],
-        help="Detector to analyze.",
+        help="Detector to analyze (H1 or L1).",
     )
 
     parser.add_argument(
@@ -323,7 +323,8 @@ def run_tcw_injection(args, inj_provider=None, sour_to_het=None):
     else:
         if ifo == 'H1':
             ant = inject.ligoh()
-        elif ifo == 'L1':
+        # Option validity is checked when args are parsed, no need to check again
+        else:
             ant = inject.ligol()
         nsid = 10000
         alpha, delta = inject.random_sky_deg()

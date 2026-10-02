@@ -22,13 +22,13 @@ def parse_args():
     parser = argparse.ArgumentParser()
 
     # ------------------------------------------------------------------
-# Data selection
-# ------------------------------------------------------------------
+    # Data selection
+    # ------------------------------------------------------------------
 
     parser.add_argument(
         "--obs-run",
         default="O4a",
-        help="Observing run label used for bookkeeping and output naming.",
+        help="Observing run label used for bookkeeping and consistency checks.",
     )
 
     parser.add_argument(
@@ -39,19 +39,20 @@ def parse_args():
     )
 
     parser.add_argument(
-        "--sfdb-glob",
-        default="/Users/andrewmiller/Downloads/*.SFDB09",
-        help="Glob pattern specifying the SFDB files to read.",
+        "--sfdb-dir",
+        type=Path,
+        default=Path("~/Downloads"),
+        help="Directory containing the .SFDB09 files to read.",
     )
 
     parser.add_argument(
         "--sciseg-file",
         type=Path,
         default=Path(
-            "/Users/andrewmiller/Desktop/China/gwosc/gwosc/create_sfdbs/"
+            "~/Desktop/China/gwosc/gwosc/create_sfdbs/"
             "segsH1AnalysisReadyMinusVetoes_O4a_C00_g0f406df6.txt"
         ),
-        help="Science-segment file used to define valid observing times.",
+        help="Science-segment file used to check whether the analyzed data are in science time.",
     )
 
     parser.add_argument(
@@ -210,15 +211,31 @@ def run_cw_injection(args,inj_provider = None):
         print("custom injection")
         custom = True
 
-    sciseg_file = args.sciseg_file
-    sci_times = load_sciseg_file(sciseg_file)
+    sfdb_dir = args.sfdb_dir.expanduser().resolve()
+    sciseg_file = args.sciseg_file.expanduser().resolve()
 
-    sfdb_files = glob.glob(args.sfdb_glob)
+    ifo = args.ifo
+
+    sfdb_files = sorted(sfdb_dir.glob("*.SFDB09"))
+
     if not sfdb_files:
-        raise FileNotFoundError("No .SFDB09 files found in the current directory.")
+        raise FileNotFoundError(f"No .SFDB09 files found in {sfdb_dir}")
     else:
         sfdb_file = sfdb_files[0]
         print(f"Using SFDB file: {sfdb_file}")
+
+    if not sciseg_file.exists():
+        raise FileNotFoundError(
+            f"Science-segment file not found: {sciseg_file}")
+
+    if ifo not in sciseg_file.name:
+        raise ValueError(
+            f"IFO '{ifo}' does not match science-segment file "
+            f"'{sciseg_file.name}'"
+        )
+
+    sci_times = load_sciseg_file(sciseg_file)
+
     minf = args.minf
     maxf = minf + args.band
     # maxf = minf + 1
