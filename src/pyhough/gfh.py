@@ -1,6 +1,7 @@
 import numpy as np
 import pyhough
 import matplotlib.pyplot as plt
+from fractions import Fraction
 from typing import Tuple
 
 
@@ -30,7 +31,7 @@ def hfdf_hough_transients(peaks, hm_job):
         minx = np.min(x)
         maxx = np.max(x)
         dx = df * 1 / maxf0
-        poww = 1 ### not physical, just to make codes work
+        poww = 1  # not physical, just to make codes work
     else:
         x = peaks[1, :] ** -poww
         minx = 1 / maxf0 ** poww
@@ -58,7 +59,7 @@ def hfdf_hough_transients(peaks, hm_job):
         x0_a = ((x[ii0:ii[it]+1] - inix) / ddx)
         t = peaks[0, ii0]
         tddx = t / ddx
-        
+
         for id in range(len(gridk)):
             td = gridk[id] * tddx * poww
             inds = np.round(x0_a - td).astype(int)
@@ -66,11 +67,11 @@ def hfdf_hough_transients(peaks, hm_job):
             a = inds[ind_of_inds]
             log_inds = a <= nbin_x-1
             a = a[log_inds]
-            binh_df0[id, a] = binh_df0[id,a] + 1
+            binh_df0[id, a] = binh_df0[id, a] + 1
 
         ii0 = ii[it] + 1
 
-    hm_job = hm_job.copy() 
+    hm_job = hm_job.copy()
     hm_job['dx'] = dx
     hm_job['gridx'] = np.arange(inix, finx, ddx)
 
@@ -184,14 +185,14 @@ def LongT_GENERALIZED_fasthough(
         hmap = np.zeros((0, nbin_fbandx))
 
     # ---- Update hm_job in place ----
-    hm_job['gridx'] = np.arange(minx0,maxx0,dx)
+    hm_job['gridx'] = np.arange(minx0, maxx0, dx)
     hm_job["dx"] = dx
     hm_job["which_hough"] = "gfh"
 
     return hmap, hm_job
 
 def make_hm_job_struct(minf, maxf, TFFT, dur, n, ref_perc_time, gridk, epoch):
-    
+
     hm_job = {
         'minf': minf,               # minimum frequency to do the Hough on
         'maxf': maxf,               # maximum frequency to do the Hough on
@@ -217,7 +218,8 @@ def andrew_long_transient_grid_k(Tfft, f0range, f0dotrange, tobs, nb):
     log10fdotmax = np.log10(abs(f0dotrange[1]))
 
     randf = f0min + (f0max - f0min) * np.random.rand(10000)
-    log10randfdot = log10fdotmin + (log10fdotmax - log10fdotmin) * np.random.rand(10000)
+    log10randfdot = log10fdotmin + \
+        (log10fdotmax - log10fdotmin) * np.random.rand(10000)
 
     each_k_step = []
     nk = []
@@ -251,6 +253,7 @@ def andrew_long_transient_grid_k(Tfft, f0range, f0dotrange, tobs, nb):
 
     return gridk, each_k_step
 
+
 def cbc_shorten_gridk(gridk, mink, maxk, frac_around=0.15):
     factor = 1 + frac_around
     kmin = mink / factor
@@ -260,21 +263,19 @@ def cbc_shorten_gridk(gridk, mink, maxk, frac_around=0.15):
     reduced_gridk = gridk[inddd:ind2 + 1]
     return reduced_gridk
 
+
 def get_f0_from_x0(x0, n):
     f0 = x0**(-1 / (n - 1))
     return f0
-
-import numpy as np
-import numba as nb
 
 
 def LongT_GENERALIZED_fasthough_nonuni(peakss, hm_job):
     """
     Creates a x/k Hough map with non-uniform x-grid binning
-    
+
     This code takes as input a peakmap and first transforms t/f --> t/x
     according to the braking index, then maps t/x --> x/k using the Hough
-    
+
     Parameters:
     -----------
     peakss : ndarray
@@ -283,7 +284,7 @@ def LongT_GENERALIZED_fasthough_nonuni(peakss, hm_job):
         Row 0: time (MJD)
         Row 1: frequency (Hz)
         Row 2: amplitude (not used)
-    
+
     hm_job : dict
         Hough map structure containing:
             'minf' : minimum frequency of Hough map (Hz)
@@ -307,47 +308,47 @@ def LongT_GENERALIZED_fasthough_nonuni(peakss, hm_job):
             'dx' : spacing in x grid (Hz^{1-n})
             'which_hough' : 'gfh_nonuni'
     """
-    
+
     Day_inSeconds = 86400
-    
+
     gridk = hm_job['gridk'].copy()
     braking_index = hm_job['n']
-    
+
     # Flip spindowns to spinups for certain braking indices
     if braking_index not in [5, 3, 7]:
         # disp('chirp, flipping spindowns to spinups')
         gridk = -gridk
-    
+
     pow_val = braking_index - 1
-    
+
     n2 = peakss.shape[1]
     weights = np.ones(n2)
-    
+
     epoch = hm_job['epoch']
     tpeaks = Day_inSeconds * (peakss[0, :] - epoch)
-    
+
     minf0 = hm_job['minf']
     maxf0 = hm_job['maxf']
     df = hm_job['df']
     enh = hm_job['frenh']
-    
+
     if braking_index == 1:  # case of pulsar winds
         xpeaks = np.log(peakss[1, :])
         pow_val = 1  # not physical, negates pow in each expression
     else:
         xpeaks = peakss[1, :] ** (-pow_val)
-    
+
     # Create non-uniform grid
     freq_grid = np.arange(minf0, maxf0 + df, df)
     gridx = np.flip(1.0 / (freq_grid ** pow_val))
-    
+
     # Call the fast vectorized version
     binh_df0 = original_version_nonuni_fast(
         xpeaks, tpeaks, gridk, gridx, weights, braking_index
     )
-    
+
     hfdf = binh_df0
-    
+
     # Update hm_job with output parameters
     hm_job['gridx'] = gridx[:-1]
     hm_job['dx'] = np.diff(gridx)
@@ -360,7 +361,7 @@ def original_version_nonuni_fast(xpeaks, tpeaks, gridk, gridx, weights, braking_
     """
     Fully vectorized fast non-uniform x-grid binning using list comprehension
     Inspired by LongT_GENERALIZED_fasthough vectorization
-    
+
     Parameters:
     -----------
     xpeaks : array_like
@@ -375,46 +376,47 @@ def original_version_nonuni_fast(xpeaks, tpeaks, gridk, gridx, weights, braking_
         Weight for each peak (usually all 1s)
     braking_index : float
         Braking index
-    
+
     Returns:
     --------
     binh_df0_orig : ndarray
         Hough map of shape (nbin_k, num_bins)
     """
-    
+
     pow_val = braking_index - 1
     num_bins = len(gridx) - 1
-    
+
     # Create bin edges from the grid points
     bin_edges = np.concatenate([gridx, [np.inf]])
-    
+
     # Normalize time by smallest k step for numerical stability
     dk_diff = np.diff(gridk)
     if len(dk_diff) > 0:
         dk = np.min(np.abs(dk_diff))
     else:
         dk = 1.0
-    
+
     slopes = gridk / dk
     tt_norm = tpeaks * dk * pow_val
-    
+
     # THE KEY VECTORIZATION: Use list comprehension to process all k values at once
     # This is the same trick as LongT_GENERALIZED_fasthough
     hfdf_list = [
-        discretize_and_accumulate(xpeaks, tt_norm, slope, bin_edges, num_bins, weights)
+        discretize_and_accumulate(
+            xpeaks, tt_norm, slope, bin_edges, num_bins, weights)
         for slope in slopes
     ]
-    
+
     # Convert list to matrix (stack as columns, then transpose)
     binh_df0_orig = np.column_stack(hfdf_list).T
-    
+
     return binh_df0_orig
 
 
 def discretize_and_accumulate(xx, tt_norm, slope, bin_edges, num_bins, weights):
     """
     Compute x0 values for this slope and bin them
-    
+
     Parameters:
     -----------
     xx : array_like
@@ -429,7 +431,7 @@ def discretize_and_accumulate(xx, tt_norm, slope, bin_edges, num_bins, weights):
         Number of bins
     weights : array_like
         Weight for each peak
-    
+
     Returns:
     --------
     counts : ndarray
@@ -437,38 +439,39 @@ def discretize_and_accumulate(xx, tt_norm, slope, bin_edges, num_bins, weights):
     """
     # Compute x0 values for this slope
     x0s = xx - tt_norm * slope
-    
+
     # Discretize into bins
     # np.digitize returns 1-based indices, subtract 1 for 0-based
     bin_idx = np.digitize(x0s, bin_edges) - 1
-    
+
     # Filter valid bins
     valid = (bin_idx >= 0) & (bin_idx < num_bins)
-    
+
     # Accumulate with weights
     if np.any(valid):
         counts = np.bincount(
-            bin_idx[valid], 
-            weights=weights[valid], 
+            bin_idx[valid],
+            weights=weights[valid],
             minlength=num_bins
         )[:num_bins]
     else:
         counts = np.zeros(num_bins)
-    
+
     return counts
 
-def plot_hm(hmap,info,physical=True,lab='number count'):
+
+def plot_hm(hmap, info, physical=True, lab='number count'):
     if physical:
         mcsss = pyhough.physics.calc_mc_with_k(info['gridk'])
-        fffss = pyhough.gfh.get_f0_from_x0(info['gridx'],info['n'])
+        fffss = pyhough.gfh.get_f0_from_x0(info['gridx'], info['n'])
     else:
         mcsss = info['gridk']
         fffss = info['gridx']
-    fig, ax = plt.subplots()#figsize=(0.8 * 16, 0.8 * 9))
+    fig, ax = plt.subplots()  # figsize=(0.8 * 16, 0.8 * 9))
     if physical:
         ax.set(ylabel=r"$\mathcal{M}$ $[M_\odot]$", xlabel=r"frequency [Hz]")
     else:
-        xlab,ylab = get_hough_axis_labels(info['n'])
+        xlab, ylab = get_hough_axis_labels(info['n'])
         ax.set(ylabel=ylab, xlabel=xlab)
     c = ax.pcolormesh(
         fffss,
@@ -481,7 +484,6 @@ def plot_hm(hmap,info,physical=True,lab='number count'):
     plt.yscale('log')
     plt.tight_layout()
 
-from fractions import Fraction
 
 def format_power(p):
     """
@@ -493,6 +495,7 @@ def format_power(p):
         return f"{frac.numerator}"
     else:
         return r"\frac{" + f"{frac.numerator}" + "}{" + f"{frac.denominator}" + "}"
+
 
 def get_hough_axis_labels(n):
     """
