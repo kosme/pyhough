@@ -4,9 +4,10 @@ import matplotlib.pyplot as plt
 from fractions import Fraction
 from typing import Tuple
 
+Day_inSeconds = 86400.0
+
 
 def hfdf_hough_transients(peaks, hm_job):
-    Day_inSeconds = 86400
 
     gridk = np.squeeze(hm_job['gridk'])
     minf0 = hm_job['minf']
@@ -81,20 +82,40 @@ def hfdf_hough_transients(peaks, hm_job):
 def LongT_GENERALIZED_fasthough(
     peaks: np.ndarray,
     hm_job: dict,
-) -> Tuple[np.ndarray, dict]:
+) -> np.ndarray:
     """
-    Python translation of:
+    TODO: Improve description
+    Creates a x/k Hough map
 
-        [hfdf_map, hm_job] = LongT_GENERALIZED_fasthough(peaks, hm_job)
+    Parameters:
+    -----------
+    peaks : ndarray
+        peaks(3,n) - peaks of the peakmap as [t,fr,amp] 
+        (fr corrected for the Doppler effect)
+        Row 0: time (MJD)
+        Row 1: frequency (Hz)
+        Row 2: amplitude (not used)
 
-    Returns
-    -------
+    hm_job : dict
+        Hough map structure containing:
+            'minf' : minimum frequency of Hough map (Hz)
+            'maxf' : maximum frequency of Hough map (Hz)
+            'df' : frequency resolution (1/TFFT) (Hz)
+            'dur' : duration of peakmap (s)
+            'patch' : [Longitude Latitude] (ecliptic)
+            'n' : braking index
+            'ref_perc_time' : percentile of reference time [0,1]
+            'frenh' : frequency enhancement (1)
+            'gridk' : grid on constant k parameter
+            'epoch' : reference time (MJD)
+        This function modifies the structure and adds the following fields:
+            'gridx' : x-grid values
+            'dx' : spacing in x grid
+            'which_hough' : 'gfh'
+    Returns:
+    --------
     hfdf_map : np.ndarray
         2D Hough map array of shape (nbin_fbandx, len(gridk))
-    hm_job : dict
-        Same object, updated in-place with:
-            - 'dx'
-            - 'which_hough'
     """
 
     peaks = np.asarray(peaks)
@@ -112,25 +133,24 @@ def LongT_GENERALIZED_fasthough(
     weights[peaks[1, :] < 0] = 0.0
 
     # Convert time to seconds relative to epoch
-    t_sec = (peaks[0, :] - epoch) * 86400.0
-    Tmax = np.max(np.abs(t_sec)) if n_peaks > 0 else 0.0
+    tpeaks = Day_inSeconds * (peaks[0, :] - epoch)
+    Tmax = np.max(np.abs(tpeaks)) if n_peaks > 0 else 0.0
 
     minf0 = hm_job["minf"]
     maxf0 = hm_job["maxf"]
     df = hm_job["df"]
     enh = hm_job.get("frenh", 1.0)
-    fr = peaks[1, :].astype(float)
 
     # ----- x transform -----
     if n == 1.0:
-        xx = np.log(fr)
+        xx = np.log(peaks[1, :])
         dx = df / maxf0
         ddx = dx / enh
         minx0 = np.floor(np.log(minf0) / ddx) * ddx
         maxx0 = np.ceil(np.log(maxf0) / ddx) * ddx
         pow_ = 1.0
     else:
-        xx = fr ** (-pow_)
+        xx = peaks[1, :] ** (-pow_)
         dx = pow_ * df / (maxf0 ** n)
         ddx = dx / enh
         minx0 = 1.0 / (maxf0 ** pow_)
@@ -163,7 +183,7 @@ def LongT_GENERALIZED_fasthough(
         dk = 1.0
 
     xx_norm = (xx - inix) / ddx
-    tt_norm = t_sec * dk * pow_ / ddx
+    tt_norm = tpeaks * dk * pow_ / ddx
     slopes = gridk / dk
 
     # ----- Build Hough map -----
@@ -189,7 +209,7 @@ def LongT_GENERALIZED_fasthough(
     hm_job["dx"] = dx
     hm_job["which_hough"] = "gfh"
 
-    return hmap, hm_job
+    return hmap
 
 def make_hm_job_struct(minf, maxf, TFFT, dur, n, ref_perc_time, gridk, epoch):
 
@@ -269,7 +289,7 @@ def get_f0_from_x0(x0, n):
     return f0
 
 
-def LongT_GENERALIZED_fasthough_nonuni(peakss, hm_job):
+def LongT_GENERALIZED_fasthough_nonuni(peaks, hm_job):
     """
     Creates a x/k Hough map with non-uniform x-grid binning
 
@@ -278,7 +298,7 @@ def LongT_GENERALIZED_fasthough_nonuni(peakss, hm_job):
 
     Parameters:
     -----------
-    peakss : ndarray
+    peaks : ndarray
         peaks(3,n) - peaks of the peakmap as [t,fr,amp] 
         (fr corrected for the Doppler effect)
         Row 0: time (MJD)
@@ -297,35 +317,34 @@ def LongT_GENERALIZED_fasthough_nonuni(peakss, hm_job):
             'frenh' : frequency enhancement (1)
             'gridk' : grid on constant k parameter
             'epoch' : reference time (MJD)
-    
+        This function modifies the structure and adds the following fields:
+            'gridx' : x-grid values
+            'dx' : spacing in x grid (Hz^{1-n})
+            'which_hough' : 'gfh_nonuni'
     Returns:
     --------
     hfdf : ndarray
         Hough map (transposed histogram)
-    hm_job : dict
-        Updated hough map structure with additional fields:
-            'gridx' : x-grid values
-            'dx' : spacing in x grid (Hz^{1-n})
-            'which_hough' : 'gfh_nonuni'
     """
-
-    Day_inSeconds = 86400
 
     gridk = hm_job['gridk'].copy()
     braking_index = hm_job['n']
 
     # Flip spindowns to spinups for certain braking indices
-    if braking_index not in [5, 3, 7]:
+    if braking_index not in [3, 5, 7]:
         # disp('chirp, flipping spindowns to spinups')
+        # IMPORTANT WARNING
+        # DO NOT STORE THIS CHANGE in hm_job
+        # The flipped value crashes plot_hm()
         gridk = -gridk
 
     pow_val = braking_index - 1
 
-    n2 = peakss.shape[1]
-    weights = np.ones(n2)
+    n_peaks = peaks.shape[1]
+    weights = np.ones(n_peaks)
 
     epoch = hm_job['epoch']
-    tpeaks = Day_inSeconds * (peakss[0, :] - epoch)
+    tpeaks = Day_inSeconds * (peaks[0, :] - epoch)
 
     minf0 = hm_job['minf']
     maxf0 = hm_job['maxf']
@@ -333,10 +352,10 @@ def LongT_GENERALIZED_fasthough_nonuni(peakss, hm_job):
     enh = hm_job['frenh']
 
     if braking_index == 1:  # case of pulsar winds
-        xpeaks = np.log(peakss[1, :])
+        xpeaks = np.log(peaks[1, :])
         pow_val = 1  # not physical, negates pow in each expression
     else:
-        xpeaks = peakss[1, :] ** (-pow_val)
+        xpeaks = peaks[1, :] ** (-pow_val)
 
     # Create non-uniform grid
     freq_grid = np.arange(minf0, maxf0 + df, df)
@@ -353,8 +372,8 @@ def LongT_GENERALIZED_fasthough_nonuni(peakss, hm_job):
     hm_job['gridx'] = gridx[:-1]
     hm_job['dx'] = np.diff(gridx)
     hm_job['which_hough'] = 'gfh_nonuni'
-    
-    return hfdf, hm_job
+
+    return hfdf
 
 
 def original_version_nonuni_fast(xpeaks, tpeaks, gridk, gridx, weights, braking_index):
@@ -516,14 +535,8 @@ def get_hough_axis_labels(n):
 
 
 def vary_p0_hfdf_compute_mu_sigma_nonuni_grids(
-    gridx,
-    gridk,
-    n,
-    TFFT,
-    fmin,
-    fmax,
+    hm_job,
     times,
-    epoch,
     p0_sft,
 ):
     """
@@ -531,29 +544,24 @@ def vary_p0_hfdf_compute_mu_sigma_nonuni_grids(
 
     Parameters
     ----------
-    gridx : array-like, shape (Nx,)
-        Non-uniform x grid used in the Hough map.
-
-    gridk : array-like, shape (Nk,)
-        k grid used in the Hough map.
-
-    n : float
-        Braking index, with x = f^{-(n-1)}.
-
-    TFFT : float
-        FFT duration in seconds. df = 1/TFFT.
-
-    fmin : float
-        Minimum frequency in hertz
-
-    fmax : float
-        Maximun frequency in hertz
+    hm_job : dict
+        Hough map structure containing:
+            'minf' : minimum frequency of Hough map (Hz)
+            'maxf' : maximum frequency of Hough map (Hz)
+            'df' : frequency resolution (1/TFFT) (Hz)
+            'dur' : duration of peakmap (s)
+            'patch' : [Longitude Latitude] (ecliptic)
+            'n' : braking index
+            'ref_perc_time' : percentile of reference time [0,1]
+            'frenh' : frequency enhancement (1)
+            'gridk' : grid on constant k parameter
+            'gridx' : x-grid values
+            'epoch' : reference time (MJD)
+            'dx' : spacing in x grid (Hz^{1-n})
+            'which_hough' : 'gfh_nonuni'
 
     times : ndarray
         SFT times in MJD
-
-    epoch : float
-        Hough reference epoch in MJD.
 
     p0_sft : float or array-like, shape (Nt,)
         Per-SFT peak-selection probability.
@@ -571,17 +579,17 @@ def vary_p0_hfdf_compute_mu_sigma_nonuni_grids(
     # Unpack inputs
     # ---------------------------------------------------------
 
-    tsec = 86400.0 * (times - epoch)
+    tsec = Day_inSeconds * (times - hm_job['epoch'])
 
-    df = 1.0 / TFFT
-    pow_val = n - 1.0
+    df = hm_job['df']
+    pow_val = hm_job['n'] - 1.0
 
     # ---------------------------------------------------------
     # Shape handling
     # ---------------------------------------------------------
 
-    gridx = np.asarray(gridx, dtype=float).reshape(-1)
-    gridk = np.asarray(gridk, dtype=float).reshape(-1)
+    gridx = np.asarray(hm_job['gridx'], dtype=float).reshape(-1)
+    gridk = np.asarray(hm_job['gridk'], dtype=float).reshape(-1)
     p0_sft = np.asarray(p0_sft, dtype=float).reshape(-1)
 
     Nx = len(gridx)
@@ -607,9 +615,9 @@ def vary_p0_hfdf_compute_mu_sigma_nonuni_grids(
     # Reproduce the inclusive MATLAB-colon behavior.
     # ---------------------------------------------------------
 
-    Nf = int(np.floor((fmax - fmin) / df + 1.0 + 1e-12))
+    Nf = int(np.floor((hm_job['maxf'] - hm_job['minf']) / df + 1.0 + 1e-12))
 
-    f_sample = fmin + df * np.arange(Nf, dtype=float)
+    f_sample = hm_job['minf'] + df * np.arange(Nf, dtype=float)
 
     # x-bin boundaries -- identical construction to the Hough
     xedges = np.flip(
@@ -649,7 +657,7 @@ def vary_p0_hfdf_compute_mu_sigma_nonuni_grids(
     # Match MATLAB sign convention for chirps
     # ---------------------------------------------------------
 
-    if n not in (3, 5, 7):
+    if hm_job['n'] not in (3, 5, 7):
         gridk = -gridk
 
     # ---------------------------------------------------------

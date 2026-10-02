@@ -391,6 +391,7 @@ def run_tcw_injection(args, inj_provider=None, sour_to_het=None):
                     t_fin = t0 + dur
                     _, _, t_in, _ = time_in_science(t0, t_fin, sci_times)
 
+                    # This causes the sample file to ALWAYS fail if white noise is disabled
                     if white_noise == False:
                         if t_in / dur < 0.99:
                             continue
@@ -485,7 +486,7 @@ def run_tcw_injection(args, inj_provider=None, sour_to_het=None):
     # Run the GFH
 
     if gfh_nonuni:
-        hmap,info = gfh.LongT_GENERALIZED_fasthough_nonuni(p,hm_job)
+        hmap = gfh.LongT_GENERALIZED_fasthough_nonuni(p, hm_job)
 
         times_mjd = time_conversions.gps2mjd(allt0s)
 
@@ -493,29 +494,30 @@ def run_tcw_injection(args, inj_provider=None, sour_to_het=None):
         # each bin in Hough map, and standard deviation
 
         MU, ST = gfh.vary_p0_hfdf_compute_mu_sigma_nonuni_grids(
-            hm_job['gridx'], gridk, hm_job['n'], new_tfft, minf, maxf,
-            times_mjd, hm_job['epoch'], p0emp)
-        info['MU'] = MU
-        info['ST'] = ST
+            hm_job, times_mjd, p0emp)
+        hm_job['MU'] = MU
+        hm_job['ST'] = ST
         CR = (hmap - MU.T) / ST.T
-    else:        
-        hmap, info = gfh.LongT_GENERALIZED_fasthough(p, hm_job)
+    else:
+        hmap = gfh.LongT_GENERALIZED_fasthough(p, hm_job)
 
     if plot:
         if gfh_nonuni:
-            gfh.plot_hm(CR, info, physical=True, lab='CR')
+            gfh.plot_hm(CR, hm_job, physical=True, lab='CR')
         else:
-            gfh.plot_hm(hmap, info, physical=True)
+            gfh.plot_hm(hmap, hm_job, physical=True)
 
     nk, nx = hmap.shape
     # number of candidates to select in the hough map
     kcand = int(np.floor(nk * nx * fap))
     if gfh_nonuni:
         cand2, more_info = cand_sel.select_cands_transients_nonuni(
-            CR, info, kcand)
+            CR, hm_job, kcand)
     else:
-        pass
-        # cand2,more_info = cand_sel.hfdf_peak_transients(hmap,info,int(np.sqrt(kcand)),deltaf=0,dn=0)
+        # this branch is incomplete, so skip the remaining part of the function
+        # TODO: Complete branch
+        return
+        # cand2, more_info = cand_sel.hfdf_peak_transients(hmap, hm_job, int(np.sqrt(kcand)), deltaf=0, dn=0)
     # select significant candidates in the Hough map
     cand2 = cand2[:, np.any(cand2 != 0, axis=0)]
 
