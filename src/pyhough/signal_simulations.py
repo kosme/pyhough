@@ -65,8 +65,6 @@ def cbc_calc_pn_freq(m1, m2, tau, order=3.5):
         Seconds to merger (tc - t), same shape/broadcastable with m1, m2.
     order : float
         PN order in {1, 1.5, 2, 2.5, 3, 3.5}.
-    consts : Constants
-        Physical constants container.
 
     Returns
     -------

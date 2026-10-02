@@ -511,15 +511,15 @@ def get_hough_axis_labels(n):
 
     return xlabel, ylabel
 
-import numpy as np
-
 
 def vary_p0_hfdf_compute_mu_sigma_nonuni_grids(
     gridx,
     gridk,
     n,
     TFFT,
-    basic_info,
+    fmin,
+    fmax,
+    times,
     epoch,
     p0_sft,
 ):
@@ -540,10 +540,14 @@ def vary_p0_hfdf_compute_mu_sigma_nonuni_grids(
     TFFT : float
         FFT duration in seconds. df = 1/TFFT.
 
-    basic_info : object or dict
-        Must contain:
-            tim       : SFT times in MJD
-            freq_band : [fmin, fmax] in Hz
+    fmin : float
+        Minimum frequency in hertz
+
+    fmax : float
+        Maximun frequency in hertz
+
+    times : ndarray
+        SFT times in MJD
 
     epoch : float
         Hough reference epoch in MJD.
@@ -563,13 +567,6 @@ def vary_p0_hfdf_compute_mu_sigma_nonuni_grids(
     # ---------------------------------------------------------
     # Unpack inputs
     # ---------------------------------------------------------
-
-    if isinstance(basic_info, dict):
-        times = np.asarray(basic_info["tim"], dtype=float).reshape(-1)
-        fmin, fmax = basic_info["freq_band"]
-    else:
-        times = np.asarray(basic_info.tim, dtype=float).reshape(-1)
-        fmin, fmax = basic_info.freq_band
 
     tsec = 86400.0 * (times - epoch)
 

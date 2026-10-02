@@ -457,5 +457,4 @@ def plot_CR_histogram_with_inset(
         color='gray', linestyle='--', linewidth=1
     ))
 
-
-
+    plt.show()
