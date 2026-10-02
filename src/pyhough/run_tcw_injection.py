@@ -8,10 +8,11 @@ from create_sfdbs.read_sfdb import sfdb_read_an_FFT
 from create_sfdbs.convert_sciseg_file import load_sciseg_file, time_in_science
 
 from pyhough import pm, physics, gfh, provider_injections
-from pyhough import FFTing, time_conversions, inject, cand_sel,obs_runs
+from pyhough import FFTing, time_conversions, inject, cand_sel, obs_runs
 
 import json
 import sys
+
 
 def parse_args():
     parser = argparse.ArgumentParser(
@@ -263,14 +264,13 @@ def run_tcw_injection(args, inj_provider=None, sour_to_het=None):
     fap = args.fap
     ref_perc_time = args.ref_perc_time
 
-
     white_noise = args.white_noise
     downsamp = args.downsamp
     band = args.band
     plot = args.plot
     gfh_nonuni = args.gfh_nonuni
 
-    
+
     provider_type = getattr(inj_provider, "provider_type", None)
     inj_kwargs = json.loads(args.inj_kwargs)
 
@@ -284,10 +284,9 @@ def run_tcw_injection(args, inj_provider=None, sour_to_het=None):
             f0 = inj_kwargs.get("f0", args.f0)
             h0 = inj_kwargs.get("h0", args.h0)
 
-            ### derived parameters
+            # derived parameters
 
-
-            x0 = physics.get_x0_from_f0(f0,n)
+            x0 = physics.get_x0_from_f0(f0, n)
             kn = physics.calc_k(mc)
 
             inj_kwargs.setdefault("f0", f0)
@@ -307,7 +306,6 @@ def run_tcw_injection(args, inj_provider=None, sour_to_het=None):
         provider_factory = provider_injections.PROVIDER_REGISTRY[args.inj_provider]
         inj_provider = provider_factory(**inj_kwargs)
 
-    
     provider_type = getattr(inj_provider, "provider_type", args.inj_provider)
     provider_params = getattr(inj_provider, "params", {})
 
@@ -328,14 +326,16 @@ def run_tcw_injection(args, inj_provider=None, sour_to_het=None):
         elif ifo == 'L1':
             ant = inject.ligol()
         nsid = 10000
-        alpha,delta = inject.random_sky_deg()
+        alpha, delta = inject.random_sky_deg()
         psi = inject.random_psi()
         cosiota = inject.random_cosiota()
-        sour = inject.Source(alpha,delta,psi,cosiota)
+        sour = inject.Source(alpha, delta, psi, cosiota)
 
-        sid1 = np.real(inject.sidereal_lf_series(alpha, delta, 0.0, 0.0, ant, nsid))
-        sid2 = np.real(inject.sidereal_lf_series(alpha, delta, 0.0, 45.0, ant, nsid))    
-        ctx = provider_injections.InjContext(source=sour,sid1=sid1, sid2=sid2)
+        sid1 = np.real(inject.sidereal_lf_series(
+            alpha, delta, 0.0, 0.0, ant, nsid))
+        sid2 = np.real(inject.sidereal_lf_series(
+            alpha, delta, 0.0, 45.0, ant, nsid))
+        ctx = provider_injections.InjContext(source=sour, sid1=sid1, sid2=sid2)
 
         inj = provider_injections.Injection(provider=inj_provider, ctx=ctx)
 
@@ -396,18 +396,18 @@ def run_tcw_injection(args, inj_provider=None, sour_to_het=None):
                             continue
                         else:
                             print('signal will be completely in sci time')
-            
-                    
+
                     # norm_factor = sfdb_head.normd * sfdb_head.normw * np.sqrt(2)
                     # all_t0s_in_sfdb = np.arange(max_num_ffts)*tfft/2+t0
                     # vs = get_detector_velocities(all_t0s_in_sfdb,tfft,ifo)
-                
+
                 # if white_noise:
                 #     lfft = int(tfft / dt)
                 #     sft,sps = FFTing.sub_whitenoise(lfft,sfdb_head)
 
-
-                times,freqs,FFTs, SPSs, tf_map = FFTing.change_FFT_length(sft,sfdb_head,new_tfft,minf,maxf,inj,fft_index,downsamp,band,white_noise,sour_to_het=sour_to_het)
+                times, freqs, FFTs, SPSs, tf_map = FFTing.change_FFT_length(
+                    sft, sfdb_head, new_tfft, minf, maxf, inj, fft_index,
+                    downsamp, band, white_noise, sour_to_het=sour_to_het)
                 if band or downsamp:
                     freqs = freqs + minf
                 if fft_index == 0:
@@ -416,46 +416,47 @@ def run_tcw_injection(args, inj_provider=None, sour_to_het=None):
                     whole_map = np.concatenate((whole_map, tf_map), axis=1)
 
                 allt0s.extend(times)
-                
+
                 print(f"[{fft_index+1}/{int(N_FFT+1)}] FFTs complete.")
 
                 fft_index += 1
                 if fft_index > N_FFT:
                     cut_inds = np.asarray(allt0s) <= t_fin
                     allt0s = np.asarray(allt0s)[cut_inds]
-                    whole_map = whole_map[:,cut_inds]
+                    whole_map = whole_map[:, cut_inds]
                     break
 
-
-    ### Create peakmap
-    pm_times,pm_freqs,pm_pows,index = pm.make_peakmap_from_spectrogram(allt0s,freqs,whole_map,threshold)
+    # Create peakmap
+    pm_times, pm_freqs, pm_pows, index = pm.make_peakmap_from_spectrogram(
+        allt0s, freqs, whole_map, threshold)
 
     Nfs = len(np.arange(minf, maxf, 1/new_tfft))
 
-    weights = np.ones(len(pm_freqs)) #### could eventually make adaptive
+    weights = np.ones(len(pm_freqs))  # could eventually make adaptive
 
-    ### calculate empirical probability of selecting a peak
+    # calculate empirical probability of selecting a peak
     if gfh_nonuni:
-        p0emp = pm.calc_p0_empirical(weights,index,Nfs)
-
-
+        p0emp = pm.calc_p0_empirical(weights, index, Nfs)
 
     if band or downsamp:
         in_band = np.ones(pm_freqs.size, dtype=bool)
     else:
-        in_band = (pm_freqs > minf) & (pm_freqs<maxf)
+        in_band = (pm_freqs > minf) & (pm_freqs < maxf)
 
     if plot:
-        pm.python_plot_triplets((pm_times[in_band]-pm_times[0]),pm_freqs[in_band],(pm_pows[in_band]),'.',label='equalized power')
+        pm.python_plot_triplets(
+            (pm_times[in_band]-pm_times[0]), pm_freqs[in_band], (pm_pows[in_band]), '.', label='equalized power')
 
+        # Why ax2 OR ax3???
         if not band:
-            fig2,ax2 = plt.subplots()
-            FFTing.test_exp_dist(whole_map[(freqs > minf) & (freqs<maxf),:].flatten())
+            fig2, ax2 = plt.subplots()
+            FFTing.test_exp_dist(
+                whole_map[(freqs > minf) & (freqs < maxf), :].flatten())
         else:
-            fig3,ax3 = plt.subplots()
+            fig3, ax3 = plt.subplots()
             FFTing.test_exp_dist(whole_map.flatten())
 
-    ### construct grid in k to do the GFH
+    # construct grid in k to do the GFH
 
     if fdotmin is None or fdotmax is None:
         print(
@@ -464,14 +465,16 @@ def run_tcw_injection(args, inj_provider=None, sour_to_het=None):
         )
         return
 
-    gridk,dk = gfh.andrew_long_transient_grid_k(new_tfft,[minf, maxf],[fdotmin, fdotmax],dur,n)
+    gridk, dk = gfh.andrew_long_transient_grid_k(
+        new_tfft, [minf, maxf], [fdotmin, fdotmax], dur, n)
     gridk = np.squeeze(gridk)
     # gridk = np.squeeze(gfh.cbc_shorten_gridk(gridk,sour['kn'],sour['kn']))
 
     t00_ref_time = allt0s[0] + dur * ref_perc_time
     epoch = time_conversions.gps2mjd(t00_ref_time)
 
-    hm_job = gfh.make_hm_job_struct(minf,maxf,new_tfft,dur,n,ref_perc_time,gridk,epoch)
+    hm_job = gfh.make_hm_job_struct(
+        minf, maxf, new_tfft, dur, n, ref_perc_time, gridk, epoch)
 
     p = np.array([
         time_conversions.gps2mjd(pm_times[in_band]),
@@ -479,8 +482,7 @@ def run_tcw_injection(args, inj_provider=None, sour_to_het=None):
         pm_pows[in_band]
     ])
 
-
-    ### Run the GFH
+    # Run the GFH
 
     if gfh_nonuni:
         hmap,info = gfh.LongT_GENERALIZED_fasthough_nonuni(p,hm_job)
@@ -506,30 +508,31 @@ def run_tcw_injection(args, inj_provider=None, sour_to_het=None):
             gfh.plot_hm(hmap, info, physical=True)
 
     nk, nx = hmap.shape
-    kcand = int(np.floor(nk * nx * fap)) ### number of candidates to select in the hough map
+    # number of candidates to select in the hough map
+    kcand = int(np.floor(nk * nx * fap))
     if gfh_nonuni:
-        cand2,more_info = cand_sel.select_cands_transients_nonuni(CR,info,kcand)
+        cand2, more_info = cand_sel.select_cands_transients_nonuni(
+            CR, info, kcand)
     else:
         pass
         # cand2,more_info = cand_sel.hfdf_peak_transients(hmap,info,int(np.sqrt(kcand)),deltaf=0,dn=0)
-    ### select significant candidates in the Hough map
-    cand2 = cand2[:,np.any(cand2 != 0, axis=0)]
+    # select significant candidates in the Hough map
+    cand2 = cand2[:, np.any(cand2 != 0, axis=0)]
 
-    ### Since the hough map is created at reference time epoch, (1/2 through Tobs), need to shift source parameters to that time
+    # Since the hough map is created at reference time epoch, (1/2 through Tobs), need to shift source parameters to that time
 
-    offset = t00_ref_time - allt0s[0] 
-    xnew = physics.shift_x0_by_time(x0,kn,offset,n)
+    offset = t00_ref_time - allt0s[0]
+    xnew = physics.shift_x0_by_time(x0, kn, offset, n)
 
-    ### Determine if the source was found
+    # Determine if the source was found
 
-    found, best_cand, mindist, dist, dist_each_parm_best_inj = cand_sel.coin_inj_cand(cand2,xnew,kn,coin_dist=3)
+    found, best_cand, mindist, dist, dist_each_parm_best_inj = cand_sel.coin_inj_cand(
+        cand2, xnew, kn, coin_dist=3)
 
-
-    ### plot a histogram of the CR background and injection foreground
+    # plot a histogram of the CR background and injection foreground
 
     if plot and gfh_nonuni:
-        cand_sel.plot_CR_histogram_with_inset(CR,best_cand[5])
-
+        cand_sel.plot_CR_histogram_with_inset(CR, best_cand[5])
 
     print("DONE")
 
@@ -663,8 +666,6 @@ run_tcw_injection(
 
 # =============================================================================
 # =============================================================================
-
-
 
 
 def main():
